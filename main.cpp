@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <chrono>
+#include <stdlib.h>
 
 using namespace std;
 using namespace chrono;
@@ -9,6 +10,7 @@ using namespace chrono;
 class mercadoria{
     public:
         string nome_produto;
+        int quantidade;
         float valor;
             mercadoria(){
                 nome_produto = nullptr;
@@ -26,7 +28,7 @@ class cliente{
                     itens.push_back(mercadoria());
                 }
             }
-            int indice(vector<cliente> compradores, const string nome_search){
+            int indice(vector<cliente> compradores, string nome_search){
                 int indice = -1;
 
                 for(int i=0; i<compradores.size(); i++){
@@ -36,13 +38,23 @@ class cliente{
                 }
 
                 return indice;
-            }
+            }//retorna a posição do cliente no vector
 
 };
 
+float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve){
+    float venda = 0.0, compra = 0.0;
+
+    for(int i=0; i<itens_Co.size()+itens_Ve.size(); i++){
+        compra += itens_Co[i].quantidade * itens_Co[i].valor;
+        venda += itens_Ve[i].quantidade * itens_Ve[i].valor;
+    }
+    
+    return venda - compra;
+}
+
 int main(){
     vector<cliente> consumidor;
-
 
     return 0;
 }

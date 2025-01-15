@@ -3,9 +3,17 @@
 #include <fstream>
 #include <chrono>
 #include <stdlib.h>
+#include <string>
 
 using namespace std;
 using namespace chrono;
+
+template <class T>
+void reinicia_vector(vector<T> nome_vector){
+    for(int i = nome_vector.size(); i>0; i--){
+        nome_vector.erase(nome_vector.end());
+    }
+}//Basicamente, esta função reinicia um vetor, fazendo ele retornar a ter tamanho 1
 
 class mercadoria{
     public:
@@ -14,6 +22,7 @@ class mercadoria{
         float valor;
             mercadoria(){
                 nome_produto = nullptr;
+                quantidade = 0;
                 valor = 0.0;
             }
 };
@@ -24,9 +33,7 @@ class cliente{
         vector<mercadoria> itens;
             cliente(){
                 nome_cliente = nullptr;
-                for(int i=0; i< itens.size(); i++){
-                    itens.push_back(mercadoria());
-                }
+                reinicia_vector(itens);
             }
             int indice(vector<cliente> compradores, string nome_search){
                 int indice = -1;

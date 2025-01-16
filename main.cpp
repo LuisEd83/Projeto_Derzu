@@ -13,7 +13,7 @@ void reinicia_vector(vector<T>& nome_vector){
     while(!nome_vector.empty()){
         nome_vector.pop_back();
     }
-}//Basicamente, esta função reinicia um vetor, fazendo ele retornar a ter tamanho 1
+}//Basicamente, esta função reinicia um vetor, fazendo ele retornar a ter tamanho 0
 
 typedef struct{
     int day;
@@ -47,33 +47,6 @@ class mercadoria{
                     return false;
                 }
             }
-            bool separador(vector<mercadoria>& itens, int separacao, int indice, int quant_x_separacao){
-                
-                if (indice < 0 || indice >= itens.size()) {
-                    cerr << "Índice inválido." << endl;
-                    return false;
-                }
-
-                mercadoria nova_mercadoria;
-                nova_mercadoria.nome_produto = itens[indice].nome_produto + " unidade";
-                nova_mercadoria.quantidade = quant_x_separacao * separacao;
-                nova_mercadoria.valor = (itens[indice].valor / separacao) * 1.2;
-                nova_mercadoria.validade = {itens[indice].validade.day, 
-                                            itens[indice].validade.mon, 
-                                            itens[indice].validade.year};
-
-                for(int i = 0; i<itens.size(); i++){
-                    if(i==indice){
-                        if(itens[i].quantidade - 1 < 0){
-                            return false;
-                        }else{
-                            itens.insert(itens.begin() + indice-1, nova_mercadoria);
-                            return true;
-                        }
-                    }
-                }
-
-            }
 };
 
 class cliente{
@@ -83,7 +56,6 @@ class cliente{
             cliente(){
                 nome_cliente = nullptr;
                 reinicia_vector(itens);
-                itens[0] = mercadoria();
             }
             int indice(vector<cliente> compradores, string nome_search){
                 int indice = -1;
@@ -98,6 +70,46 @@ class cliente{
             }//retorna a posição do cliente no vector
 
 };
+
+bool separador(vector<mercadoria>& itens, int separacao, int indice, int quant_x_separacao){
+                
+    if (indice < 0 || indice >= itens.size()) {
+        cerr << "Índice inválido." << endl;
+        return false;
+    }
+
+    mercadoria nova_mercadoria;
+    nova_mercadoria.nome_produto = itens[indice].nome_produto + " unidade";
+    nova_mercadoria.quantidade = quant_x_separacao * separacao;
+    nova_mercadoria.valor = (itens[indice].valor / separacao) * 1.2;
+    nova_mercadoria.validade = {itens[indice].validade.day, 
+                                itens[indice].validade.mon, 
+                                itens[indice].validade.year};
+
+    for(int i = 0; i<itens.size(); i++){
+        if(i==indice){
+            if(itens[i].quantidade - 1 < 0){
+                return false;
+            }else{
+                itens.insert(itens.begin() + indice-1, nova_mercadoria);
+                return true;
+            }
+        }
+    }
+
+}
+
+float conta (vector<cliente> comprador, string nome_search){
+    float valor_conta = 0.0;
+
+    for (int i = 0; i < comprador.size(); i++){
+        if(comprador[i].nome_cliente == nome_search){
+            for(int j = 0; j < (comprador[i].itens).size(); j++){
+                valor_conta = valor_conta + comprador[i].itens[j].valor;
+            }
+        }
+    }
+}
 
 float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve){
     float venda = 0.0, compra = 0.0;

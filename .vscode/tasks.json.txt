@@ -1,0 +1,15 @@
+{
+    "label": "Compilar C++",
+    "command": "g++",
+    "args": [
+        "-std=c++11",  // Certifique-se de usar C++11 ou superior
+        "-o",
+        "main",
+        "main.cpp"
+    ],
+    "type": "shell",
+    "group": {
+        "kind": "build",
+        "isDefault": true
+    }
+}

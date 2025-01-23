@@ -237,6 +237,60 @@ void verfic_venc(vector<mercadoria>& itens_p_verific){
         }
 }
 
+void extracao_arq_prodCO(vector<mercadoria>& itens_p_arm, const string& nome_arq){
+    string nome_p_prod;
+    int num_quant;
+    int quant_pacot;
+    float preco;
+    vector<tdata> dat_ven;
+    int tam;
+
+    fstream arq_merc(nome_arq, fstream::in);
+    while(arq_merc >> nome_p_prod >> num_quant >> quant_pacot >> preco >> tam){
+        dat_ven.clear();
+
+        for(int i = 0; i<tam; i++){
+            tdata data;
+            arq_merc >> data.day >> data.mon >> data.year;
+            dat_ven.push_back(data);
+        }
+        itens_p_arm.emplace_back(nome_p_prod, num_quant, quant_pacot, preco, dat_ven);
+    }
+    arq_merc.close();
+    cout << "A extração de dados foi realizada com sucesso" << endl;
+}
+
+void extracao_arq_cli(vector<cliente>& client_p_arm, const string& nome_arq){
+    string nome_cl;
+    int tam_itens;
+    int tam_data;
+
+    fstream arq_cli(nome_arq, fstream::in);
+    if (!arq_cli.is_open()) {
+        cerr << "Erro ao abrir o arquivo." << endl;
+        return;
+    }
+    while(arq_cli >> nome_cl >> tam_itens){
+        cliente cli;
+        cli.nome_cliente = nome_cl;
+
+        for(int i=0; i<tam_itens; i++){
+            mercadoria itens_C;
+            arq_cli >> itens_C.nome_produto >> itens_C.quantidade >> itens_C.valor >> itens_C.unidade_pacote >> tam_data;
+
+            for(int j = 0; j<tam_data ; j++){
+                tdata data;
+                arq_cli >> data.day >> data.mon >> data.year;
+                itens_C.validade.emplace_back(data);
+            }
+            cli.itens.emplace_back(itens_C);
+        }
+        client_p_arm.emplace_back(cli);
+    }
+    arq_cli.close();
+    cout << "A extração de dados foi realizada com sucesso" << endl;
+}//O embace_beck foi usado para adicionar diretamente, no vector cliente, o vector objeto mercadoria.
+
 void menu(){
     vector<cliente> consumidor, consumidor_amigo;
     vector<mercadoria> merc_CO, merc_VE;
@@ -249,45 +303,20 @@ void menu(){
         if(verificador_arquivo("Mercadorias.txt") == false){
             cout << "O arquivo Mercadorias.txt está vazio, será necessário utilizar o último beckup feito." << endl;
             copiararq("Mercadoria_beckup.txt", "Mercadorias.txt");
-            arq_mercadoria.open("Mercadorias.txt", fstream::in);
             if(verificador_arquivo("Mercadorias.txt") == true){
-                string nome_p_prod;
-                int num_quant;
-                int quant_pacot;
-                float preco;
-                vector<tdata> dat_ven;
-                int tam = dat_ven.size();
-                while(arq_mercadoria >> nome_p_prod >> num_quant >> quant_pacot >> preco >> tam){
-                    dat_ven.clear();
-
-                    for(int i = 0; i<tam; i++){
-                        tdata data;
-                        arq_mercadoria >> data.day >> data.mon >> data.year;
-                        dat_ven.push_back(data);
-                    }
-                    merc_CO.emplace_back(nome_p_prod, num_quant, quant_pacot, preco, dat_ven);
-                }
+                extracao_arq_prodCO(merc_CO, "Mercadorias.txt");
                 verfic_venc(merc_CO);
             }
-            arq_mercadoria.close();
         }else{
-            string nome_p_prod;
-            int num_quant;
-            int quant_pacot;
-            float preco;
-            vector<tdata> dat_ven;
-            int tam = dat_ven.size();
-            while(arq_mercadoria >> nome_p_prod >> num_quant >> quant_pacot >> preco >> tam){
-                dat_ven.clear();
-
-                for(int i = 0; i<tam; i++){
-                    tdata data;
-                    arq_mercadoria >> data.day >> data.mon >> data.year;
-                    dat_ven.push_back(data);
-                }
-                merc_CO.emplace_back(nome_p_prod, num_quant, quant_pacot, preco, dat_ven);
-            }
+            extracao_arq_prodCO(merc_CO, "Mercadorias.txt");
             verfic_venc(merc_CO);
+        }
+        if(verificador_arquivo("Clientes.txt") == false){
+            cout << "O arquivo Clientes.txt está vazio, será necessário utilizar o último beckup feito." << endl;
+            copiararq("Clientes_beckup.txt", "Clientes.txt");
+            extracao_arq_cli(consumidor_amigo, "Clientes.txt");
+        }else{
+            extracao_arq_cli(consumidor_amigo, "Clientes.txt");
         }
     }
 }

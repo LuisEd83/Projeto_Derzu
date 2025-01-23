@@ -13,7 +13,7 @@ template <class T>
 void reinicia_vector(vector<T>& nome_vector){
     while(!nome_vector.empty()){
         nome_vector.pop_back();
-    }
+    }   
 }//Basicamente, esta função reinicia um vetor, fazendo ele retornar a ter tamanho 0
 
 typedef struct{
@@ -45,7 +45,7 @@ class mercadoria{
                 int ano = local_time->tm_year + 1900;
 
                 for(int i = 0; i<validade.size(); i++){
-                    if(((validade[i].day - dia == 0) && (validade[i].mon - mes == 0) && (validade[i].year - ano == 0)) || (validade[i].year - ano < 0)){
+                    if((validade[i].day - dia <= 0) && (validade[i].mon - mes <= 0) && (validade[i].year - ano <= 0) || ((validade[i].year - ano <= 0))){
                         return true;
                     }else{
                         return false;
@@ -100,9 +100,11 @@ bool separador(vector<mercadoria>& itens, int separacao, int indice, int quant_x
     nova_mercadoria.quantidade = quant_x_separacao * separacao;
     nova_mercadoria.unidade_pacote = 1;
     nova_mercadoria.valor = (itens[indice].valor / separacao) * 1.2;
-    nova_mercadoria.validade.push_back({itens[indice].validade[0].day, 
-                                itens[indice].validade[0].mon, 
-                                itens[indice].validade[0].year});
+    for(int i = 0; i<itens[indice].validade.size(); i++){
+    nova_mercadoria.validade.push_back({itens[indice].validade[i].day, 
+                                itens[indice].validade[i].mon, 
+                                itens[indice].validade[i].year});
+    }
 
     for(int i = 0; i<itens.size(); i++){
         if(i==indice){
@@ -146,7 +148,7 @@ bool agrupador(vector<mercadoria>& itens, int indice){
                 cout << "Agrupamento realizado!" << endl;
                 return true;
             }else{
-                cout << "Este item não possui unidades o suficiente para criar um pacote" << endl;
+                cout << "Este item não possui unidades o suficiente para criar um pacote!" << endl;
                 return false;
             }
         }
@@ -180,13 +182,119 @@ float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve){
     return venda - compra;
 }//Retorna o lucro (positivo ou não).
 
+bool verificador_arquivo(const string nome_arq){
+    string line;
+    fstream arq(nome_arq,fstream::in);
+
+    if(arq>>line){
+        arq.close();
+        return true;
+    }else{
+        arq.close();
+        return false;
+    }
+}//Esta função analisa se o arquivo está vazio ou não
+
+void copiararq(const string& arq_origin, const string& arq_dest){
+    string line;
+
+    ifstream arq_O(arq_origin, ios::in);
+    if(!arq_O.is_open()){
+        cerr << "O arquivo: "<< arq_origin << " não pode ser aberto!" << endl;
+        arq_O.close();
+        return;
+    }
+
+    ofstream arq_D(arq_dest, ios::out);
+    if(!arq_D.is_open() || (verificador_arquivo(arq_dest) == false)){
+        cerr << "O arquivo: "<< arq_dest << " não pode ser aberto ou se encontra vazio!" << endl;
+        arq_D.close();
+        return;
+    }
+
+    while(getline(arq_O,line)){
+        arq_D << line << endl;
+    }
+    
+    arq_O.close(); arq_D.close();
+
+    cout << "Transferência de dados realizado com sucesso!" << endl;
+    return;
+}
+
+void verfic_venc(vector<mercadoria>& itens_p_verific){
+    string busca = " (vencido)";
+    for(int i = 0; i<itens_p_verific.size(); i++){
+        size_t posicao = itens_p_verific[i].nome_produto.find(busca);
+            for(int j = 0; j<itens_p_verific[i].validade.size(); j++){
+                if((itens_p_verific[i].comparador_data(itens_p_verific[i].validade) == true) || (posicao != string::npos)){
+                    cout << "A mercadoria: " << itens_p_verific[i].nome_produto << " Apresenta produto com validade vencida." << endl;
+                }
+            }
+            if(posicao == string::npos && (itens_p_verific[i].comparador_data(itens_p_verific[i].validade) == true)){
+                itens_p_verific[i].nome_produto += busca;
+            }
+        }
+}
+
 void menu(){
     vector<cliente> consumidor, consumidor_amigo;
     vector<mercadoria> merc_CO, merc_VE;
-    
+    fstream arq_Cliente, arq_Cliente_beckup, arq_mercadoria, arq_mercadoria_beckup;
+
+    if((verificador_arquivo("Clientes.txt") == false) && (verificador_arquivo("Mercadorias.txt") == false)){
+        cout << "Seja bem-vindo!" << endl;
+    }else{
+        cout << "Seja bem-vindo novamente!" << endl;
+        if(verificador_arquivo("Mercadorias.txt") == false){
+            cout << "O arquivo Mercadorias.txt está vazio, será necessário utilizar o último beckup feito." << endl;
+            copiararq("Mercadoria_beckup.txt", "Mercadorias.txt");
+            arq_mercadoria.open("Mercadorias.txt", fstream::in);
+            if(verificador_arquivo("Mercadorias.txt") == true){
+                string nome_p_prod;
+                int num_quant;
+                int quant_pacot;
+                float preco;
+                vector<tdata> dat_ven;
+                int tam = dat_ven.size();
+                while(arq_mercadoria >> nome_p_prod >> num_quant >> quant_pacot >> preco >> tam){
+                    dat_ven.clear();
+
+                    for(int i = 0; i<tam; i++){
+                        tdata data;
+                        arq_mercadoria >> data.day >> data.mon >> data.year;
+                        dat_ven.push_back(data);
+                    }
+                    merc_CO.emplace_back(nome_p_prod, num_quant, quant_pacot, preco, dat_ven);
+                }
+                verfic_venc(merc_CO);
+            }
+            arq_mercadoria.close();
+        }else{
+            string nome_p_prod;
+            int num_quant;
+            int quant_pacot;
+            float preco;
+            vector<tdata> dat_ven;
+            int tam = dat_ven.size();
+            while(arq_mercadoria >> nome_p_prod >> num_quant >> quant_pacot >> preco >> tam){
+                dat_ven.clear();
+
+                for(int i = 0; i<tam; i++){
+                    tdata data;
+                    arq_mercadoria >> data.day >> data.mon >> data.year;
+                    dat_ven.push_back(data);
+                }
+                merc_CO.emplace_back(nome_p_prod, num_quant, quant_pacot, preco, dat_ven);
+            }
+            verfic_venc(merc_CO);
+        }
+    }
 }
 
 int main(){
+
+    menu();
 
     return 0;
 }

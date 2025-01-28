@@ -7,21 +7,10 @@
 #include <iomanip>
 #include <cctype>
 #include <algorithm>
+#include <unistd.h>
 
 using namespace std;
 using namespace chrono;
-
-template <class T>
-int indice(vector<T> nome_vector, string nome_search){
-    int ind = -1;
-
-    for(int i = 0; i<nome_vector.size(); i++){
-        if(nome_vector[i].nome == nome_search){
-            return i;
-        }
-    }
-    return ind;
-}
 
 typedef struct{
     int day;
@@ -43,6 +32,8 @@ class mercadoria{
                 unidade_pacote = 0;
                 validade.push_back({0,0,0});
             }
+            mercadoria(string nome_produto, vector<int> quantidade, int unidade_pacote, float valor, vector<tdata> validade) 
+                : nome_produto(nome_produto), quantidade(quantidade), unidade_pacote(unidade_pacote), valor(valor), validade(validade) {}
             bool comparador_data(vector<tdata> validade){
                 auto now = system_clock::now();
                 time_t time_now = system_clock::to_time_t(now);
@@ -51,8 +42,8 @@ class mercadoria{
                 int mes = local_time->tm_mon + 1;    
                 int ano = local_time->tm_year + 1900;
 
-                for(int i = 0; i<validade.size(); i++){
-                    if((validade[i].day - dia == 0) && (validade[i].mon - mes == 0) && (validade[i].year - ano == 0) || ((validade[i].year - ano < 0))){
+                for(size_t i = 0; i<validade.size(); i++){
+                    if(((validade[i].day - dia == 0) && (validade[i].mon - mes == 0) && (validade[i].year - ano == 0)) || ((validade[i].year - ano < 0))){
                         return true;
                     }else{
                         if((validade[i].day - dia < 0) && (validade[i].mon - mes < 0) && (validade[i].year - ano <= 0)){
@@ -62,7 +53,7 @@ class mercadoria{
                         }
                     }
                 }
-
+                return false;
             }
 };
 
@@ -76,15 +67,37 @@ class cliente{
             }
 };
 
-bool separador(vector<mercadoria>& itens, int indice, int quant_x_separacao, tdata data_prod){
+int indice_prod(vector<mercadoria> nome_vector, string nome_search){
+    int ind = -1;
+
+    for(size_t i = 0; i<nome_vector.size(); i++){
+        if(nome_vector[i].nome_produto == nome_search){
+            return i;
+        }
+    }
+    return ind; 
+}
+
+int indice_cli(vector<cliente> nome_vector, string nome_search){
+    int ind = -1;
+
+    for(size_t i = 0; i<nome_vector.size(); i++){
+        if(nome_vector[i].nome_cliente == nome_search){
+            return i;
+        }
+    }
+    return ind; 
+}
+
+bool separador(vector<mercadoria>& itens, size_t indice, int quant_x_separacao, tdata data_prod){
     mercadoria nova_mercadoria;
     int ind = -1;
-    if (indice < 0 || indice >= itens.size()) {
+    if (indice >= itens.size()) {
         cerr << "Índice inválido." << endl;
         return false;
     }
     
-    for(int i = 0; i<itens[indice].validade.size(); i++){
+    for(size_t i = 0; i<itens[indice].validade.size(); i++){
         if((itens[indice].validade[i].day - data_prod.day) + (itens[indice].validade[i].mon - data_prod.mon) + (itens[indice].validade[i].year - data_prod.year) == 0){
             ind = i;
         }
@@ -115,9 +128,9 @@ bool separador(vector<mercadoria>& itens, int indice, int quant_x_separacao, tda
 
     itens[indice].quantidade[ind] -= quant_x_separacao;
 
-    for(int i = 0; i<itens.size(); i++){
+    for(size_t i = 0; i<itens.size(); i++){
         if(itens[i].nome_produto == nova_mercadoria.nome_produto){
-            for(int j = 0; j<itens[i].validade.size(); j++){
+            for(size_t j = 0; j<itens[i].validade.size(); j++){
                 if(itens[i].validade[j].day + itens[i].validade[j].mon + itens[i].validade[j].year == nova_mercadoria.validade[0].day + nova_mercadoria.validade[0].mon + nova_mercadoria.validade[0].year){
                     itens[i].quantidade[j] += nova_mercadoria.quantidade[0];
                 }else{
@@ -133,15 +146,15 @@ bool separador(vector<mercadoria>& itens, int indice, int quant_x_separacao, tda
 
 }//Separa o item original em unidades
 
-bool agrupador(vector<mercadoria>& itens, int indice){
+bool agrupador(vector<mercadoria>& itens, size_t indice){
     string busca = " unidade";
     size_t posicao = itens[indice].nome_produto.find(busca);
     string nome_provisorio;
-    int ind = -1, num_unidades = 0, n = 0, unid_fard, soma = 0;
+    int ind = -1, num_unidades = 0, n = 0, unid_fard, soma_ditens = 0, soma = 0;
 
     mercadoria new_mercadoria;
 
-    if (indice < 0 || indice >= itens.size() || (posicao == string::npos)) {
+    if (indice >= itens.size() || (posicao == string::npos)) {
         cout << "Índice inválido ou esta mercadoria não é uma unidade." << endl;
         return false;
     }else{
@@ -150,7 +163,7 @@ bool agrupador(vector<mercadoria>& itens, int indice){
         new_mercadoria.nome_produto = nome_provisorio;
     }
 
-    for(int i = 0; i < itens.size(); i++){
+    for(size_t i = 0; i < itens.size(); i++){
         string busca = nome_provisorio;
         size_t posicao = itens[i].nome_produto.find(busca);
         if(!(posicao == string::npos)){
@@ -169,23 +182,29 @@ bool agrupador(vector<mercadoria>& itens, int indice){
     do{
         itens[indice].quantidade[0 + n]--;
         num_unidades++;
-        if((num_unidades == unid_fard) || (num_unidades == itens[ind].unidade_pacote)){
+        soma++;
+
+        if((soma == unid_fard) || (soma == itens[ind].unidade_pacote)){
+            new_mercadoria.quantidade.push_back(num_unidades);
+            new_mercadoria.validade.push_back(itens[indice].validade[0+n]);
             break;
         }else{
             if(itens[indice].quantidade[0 + n] == 0){
-                new_mercadoria.validade.push_back(itens[indice].validade[0+n]);
+                new_mercadoria.quantidade.push_back(num_unidades);
+                new_mercadoria.validade.push_back(itens[indice].validade[0 + n]);
                 n++;
+                num_unidades=0;
             }
-            for(int i = 0; i<itens[indice].quantidade.size(); i++){
-                soma += itens[indice].quantidade[i];
+            for(size_t i = 0; i<itens[indice].quantidade.size(); i++){
+                soma_ditens += itens[indice].quantidade[i];
             }
             if(soma == 0){
                 cout << "Não é possível realizar o agrupamento destas unidades.";
                 return false;
             }
-        }
-    }while((num_unidades != unid_fard )|| (num_unidades != itens[ind].unidade_pacote)); //retira as unidades
-    for(int i = 0; i < itens[indice].quantidade.size(); i++){
+        }    
+    }while((soma != unid_fard )|| (soma != itens[ind].unidade_pacote)); //retira as unidades
+    for(size_t i = 0; i < itens[indice].quantidade.size(); i++){
         if(itens[indice].quantidade[i] == 0){
             itens[indice].quantidade.erase(itens[indice].quantidade.begin()+i);
             itens[indice].validade.erase(itens[indice].validade.begin()+i);
@@ -194,11 +213,11 @@ bool agrupador(vector<mercadoria>& itens, int indice){
     new_mercadoria.quantidade.push_back(1);
     new_mercadoria.valor = num_unidades * itens[indice].valor; // Nova mercadoria construída.
 
-    for(int i = 0; i<itens.size(); i++){
+    for(size_t i = 0; i<itens.size(); i++){
         string busca = new_mercadoria.nome_produto;
         size_t posicao = itens[i].nome_produto.find(busca);
         if(!(posicao == string::npos)){
-            for(int j = 0; j<new_mercadoria.quantidade.size(); j++){
+            for(size_t j = 0; j<new_mercadoria.quantidade.size(); j++){
                 itens[i].quantidade.push_back(new_mercadoria.quantidade[j]);
                 itens[i].validade.push_back(new_mercadoria.validade[j]);
             }
@@ -210,13 +229,22 @@ bool agrupador(vector<mercadoria>& itens, int indice){
     
 }//Agrupa unidades em um unico item.
 
-float conta (vector<cliente> comprador, string nome_search){
+float conta_cliente (vector<cliente> comprador, string nome_search){
     float valor_conta = 0.0;
+    float ind = -1.0;
 
-    for (int i = 0; i < comprador.size(); i++){
+    for(size_t i = 0; i<comprador.size(); i++){
         if(comprador[i].nome_cliente == nome_search){
-            for(int j = 0; j < (comprador[i].itens).size(); j++){
-                valor_conta = valor_conta + comprador[i].itens[j].valor;
+            ind = i;
+        }
+    }
+    if(ind == -1.0){
+        cout << "Nome não encontrado.\n" << "Verifique se o nome foi digitado incorretamente.";
+        return ind;
+    }else{
+        for(size_t i = 0; i<comprador[ind].itens.size(); i++){
+            for(size_t j = 0; j<comprador[ind].itens[i].quantidade.size(); i++){
+                valor_conta += comprador[ind].itens[i].quantidade[j] * comprador[ind].itens[i].valor;
             }
         }
     }
@@ -224,21 +252,28 @@ float conta (vector<cliente> comprador, string nome_search){
     return valor_conta;
 }//Retorna o que o cliente deve.
 
-float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve){
-    float venda = 0.0, compra = 0.0;
+float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve, vector<cliente> compradores){
+    float venda = 0.0, compra = 0.0, venda_cli_arm = 0.0;
 
-    for(int i = 0; i<itens_Co.size(); i++){
-        for(int j = 0; j < itens_Co[i].quantidade.size(); j++){
+    for(size_t i = 0; i<itens_Co.size(); i++){
+        for(size_t j = 0; j < itens_Co[i].quantidade.size(); j++){
             compra += itens_Co[i].quantidade[j] * itens_Co[i].valor;
         }
     }
-    for(int i = 0; i<itens_Ve.size(); i++){
-        for(int j = 0; j < itens_Ve[i].quantidade.size(); j++){
+    for(size_t i = 0; i<itens_Ve.size(); i++){
+        for(size_t j = 0; j < itens_Ve[i].quantidade.size(); j++){
             venda += itens_Ve[i].quantidade[j] * itens_Ve[i].valor;
         }
     }
+    for(size_t i = 0; i<compradores.size(); i++){
+        for(size_t j = 0; j<compradores[i].itens.size(); j++){
+            for(size_t k = 0; k<compradores[i].itens[j].quantidade.size(); k++){
+                venda_cli_arm += compradores[i].itens[j].quantidade[k] * compradores[i].itens[j].valor;
+            }
+        }
+    }
     
-    return venda - compra;
+    return venda - compra - venda_cli_arm;
 }//Retorna o lucro (positivo ou não).
 
 bool verificador_arquivo(const string nome_arq){
@@ -283,9 +318,9 @@ void copiararq(const string& arq_origin, const string& arq_dest){
 
 void verfic_venc(vector<mercadoria>& itens_p_verific){
     string busca = " (vencido)";
-    for(int i = 0; i<itens_p_verific.size(); i++){
+    for(size_t i = 0; i<itens_p_verific.size(); i++){
         size_t posicao = itens_p_verific[i].nome_produto.find(busca);
-            for(int j = 0; j<itens_p_verific[i].validade.size(); j++){
+            for(size_t j = 0; j<itens_p_verific[i].validade.size(); j++){
                 if((itens_p_verific[i].comparador_data(itens_p_verific[i].validade) == true) || (posicao != string::npos)){
                     cout << "A mercadoria: " << itens_p_verific[i].nome_produto << " Apresenta produto com validade vencida." << endl;
                 }
@@ -367,7 +402,7 @@ bool compra(vector<mercadoria>& mercadoria_CO, vector<mercadoria>& mercadoria_VE
     int ind = -1, ind_d = -1; 
     mercadoria item_VE = mercadoria();
 
-    for(int i = 0; i<mercadoria_CO.size(); i++){
+    for(size_t i = 0; i<mercadoria_CO.size(); i++){
         string busca = nome_dproduto;
         size_t posicao = mercadoria_CO[i].nome_produto.find(busca);
         if(!(posicao == string::npos)){
@@ -376,7 +411,7 @@ bool compra(vector<mercadoria>& mercadoria_CO, vector<mercadoria>& mercadoria_VE
             item_VE.valor = mercadoria_CO[i].valor;
             item_VE.unidade_pacote = mercadoria_CO[i].unidade_pacote;
         }
-        for(int j = 0; j<mercadoria_CO[i].validade.size(); j++){
+        for(size_t j = 0; j<mercadoria_CO[i].validade.size(); j++){
             if(mercadoria_CO[i].validade[j].day + mercadoria_CO[i].validade[j].mon + mercadoria_CO[i].validade[j].year == data_dprod.day + data_dprod.mon + data_dprod.year){
                 ind_d = j;
                 item_VE.validade.push_back(mercadoria_CO[i].validade[j]);
@@ -394,9 +429,9 @@ bool compra(vector<mercadoria>& mercadoria_CO, vector<mercadoria>& mercadoria_VE
         cout << "Verifique o nome ou a data digitados.";
         return false;
     }else{
-        for(int i = 0; i<mercadoria_VE.size(); i++){
+        for(size_t i = 0; i<mercadoria_VE.size(); i++){
             if(mercadoria_VE[i].nome_produto == mercadoria_CO[ind].nome_produto){
-                for(int j = 0; j<mercadoria_VE[i].validade.size(); j++){
+                for(size_t j = 0; j<mercadoria_VE[i].validade.size(); j++){
                     if(mercadoria_VE[i].validade[j].day + mercadoria_VE[i].validade[j].mon + mercadoria_VE[i].validade[j].year == data_dprod.day + data_dprod.mon + data_dprod.year){
                         mercadoria_VE[i].quantidade[j] += unidades_compradas;
                     }
@@ -454,7 +489,8 @@ void menu(){
 
     do{
         do{
-            {_sleep(1000); system("cls");}
+            sleep(2); system("cls");
+            
             cout << "Selecione a sua próxima ação (escreva o número da opção):" << endl;
             cout << "1 - Registrar cliente; \n" << "2 - Registrar produto; \n" << "3 - Excluir cliente; \n";
             cout << "4 - Excluir produto; \n" << "5 - Abrir lista de produto; \n" << "6 - Abrir lista de cliente; \n" << "7 - Verificar validade dos produtos; \n";
@@ -472,24 +508,26 @@ void menu(){
                 cin >> resp;
                 transform(resp.begin(), resp.end(), resp.begin(), [](unsigned char c){return tolower(c);});
             }
-        }while(alternativa <= 0 || alternativa > 19 || resp != "sim");
+        }while(alternativa <= 0 || alternativa > 20 || resp != "sim");
 
         system("cls");
         arq_Cliente.open("Clientes.txt", fstream::out);
 
-        string resposta, nome_dproduto;
+        string resposta, nome_dproduto, nome_dcliente;
         cliente comprador_atual;
         mercadoria merc_comprada;
+        tdata data_dprod;;
+        int ind = -1;
 
         switch(alternativa){
             case 1:
-                int tam, unidades_vend, ind;
-                tdata data_dprod;
+                int tam, unidades_vend;
                 resposta.clear(); nome_dproduto.clear();
 
                 cout << "Deseja sair desta área? (sim/não)\n";
                 cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
                 if(resposta != "não"){
+                    cout << "Redirecionando para o menu...";
                     menu();
                 }
                 comprador_atual = cliente();
@@ -500,9 +538,9 @@ void menu(){
                 system("cls");
                 cout << "Aqui é a área de registro de cliente. \n" << endl;
                 cout << "O cliente possui as seguintes caracterísicas: ";
-                cout << "Nome; \n Número de produtos comprados; \n Produtos comprados; \n Data de vencimento do produto \n" << endl;
+                cout << " - Nome; \n - Número de produtos comprados; \n - Produtos comprados; \n - Data de vencimento do produto \n" << endl;
                 cout << "Digite o nome: "; cin >> comprador_atual.nome_cliente; cout << endl;
-                for(int i = 0; i<consumidor_amigo.size(); i++){
+                for(size_t i = 0; i<consumidor_amigo.size(); i++){
                     if(consumidor_amigo[i].nome_cliente == comprador_atual.nome_cliente){
                         cout << "Este nome já é cadastrado no nosso sistema." << endl;
                         cout << "Sugerimos que vá para a área 'Realizar conta'." << endl;
@@ -513,12 +551,12 @@ void menu(){
                 cout << "Digite quantos produtos o cliente pegou: "; cin >> tam; cout << endl;
                 cout << "Digite o nome, a quantidade de unidades vendidas e a data de vencimento (no formato dia/mes/ano) deste produto." << endl;
                 for(int i = 0; i<tam; i++){
-                    nome_dproduto.clear(); unidades_vend = 0; ind = 0;
+                    unidades_vend = 0; ind = 0;
 
                     cin >> nome_dproduto >> unidades_vend;
                     cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year;
                     compra(merc_CO, merc_VE, nome_dproduto, unidades_vend, data_dprod);
-                    ind = indice(merc_VE, nome_dproduto);
+                    ind = indice_prod(merc_VE, nome_dproduto);
                     comprador_atual.itens.push_back(merc_VE[ind]);
                 }
                 consumidor_amigo.push_back(comprador_atual);
@@ -532,7 +570,6 @@ void menu(){
                 }
                 merc_comprada = mercadoria();
                 int quant;
-                tdata data_dprod;
                 resposta.clear();
 
                 cout << "Aqui é a área de registro de produto." << endl;
@@ -545,7 +582,7 @@ void menu(){
                 cout << "Valor da mercadoria (em reais): "; cin >> merc_comprada.valor;
                 cout << "Data de validade (no formato dia/mês/ano): "; cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year; merc_comprada.validade.push_back(data_dprod); cout << endl;
 
-                for(int i = 0; i<merc_CO.size(); i++){
+                for(size_t i = 0; i<merc_CO.size(); i++){
                     string busca = merc_CO[i].nome_produto;
                     size_t posicao = merc_CO[i].nome_produto.find(busca);
                     if(!(posicao == string::npos)){
@@ -559,62 +596,93 @@ void menu(){
                 cout << "Registro completo!";
             break;
             case 3:
+                resposta.clear(); nome_dcliente.clear();
+                cout << "Deseja sair desta área? (sim/não)\n";
+                cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
+                if(resposta != "não"){
+                    menu();
+                }
 
+                cout << "Aqui é a área para excluir um cliente. \n";
+                cout << "Digite o nome do cliente corretamente: ";
+                cin >> nome_dcliente;
+
+                for(size_t i = 0; i<consumidor_amigo.size(); i++){
+                    if(consumidor_amigo[i].nome_cliente == nome_dcliente){
+                        ind = i;
+                        cout << "Cliente encontrado!" << endl;
+                        if(!(consumidor_amigo[i].itens.empty())){
+                            cout << "Você não pode deletar este cliente, pois apresenta itens comprados!\n";
+                            cout << "Caso o cliente tenha pagado tudo, sugerimos que vá primeiro para a área 'Alterar cliente' e depois retorne.\n";
+                            cout << "Redirecionando ao Menu...";
+                            menu();
+                        }else{
+                            resposta.clear();
+                            cout << "Deseja deletar o cliente " << consumidor_amigo[i].nome_cliente << "?";
+                            cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
+                            if(resposta == "sim"){
+                                cout << "Cliente " << consumidor_amigo[i].nome_cliente << "deletado!";
+                                consumidor_amigo.erase(consumidor_amigo.begin() + i);
+                                cout << "Retornando para o menu...";
+                                sleep(3); menu();
+                            }else{
+                                cout << "Certo, redirecionando ao menu...";
+                            }
+                        }
+                    }
+                }
+
+                if(ind == -1){
+                    cout << "Cliente não encontrado. Por favor, verifique se o nome foi digitado corretamente.";
+                    cout << "Redirecionando ao menu...";
+                }
             break;
             case 4:
+                resposta.clear(); nome_dproduto.clear();
+                cout << "Deseja sair desta área? (sim/não)\n";
+                cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
+                if(resposta != "não"){
+                    menu();
+                }
 
-            break;
-            case 5:
+                cout << "Aqui é a área de exclusão de produto.\n";
+                cout << "Digite o nome do produto: ";
+                cin >> nome_dproduto;
 
+                int soma = 0;    
+                for(size_t i = 0; i<merc_CO.size(); i++){
+                    if(merc_CO[i].nome_produto == nome_dproduto){
+                        ind = i;
+                        cout << "Produto encontrado!" << endl;
+                        for(int quant : merc_CO[i].quantidade){
+                            soma += quant;
+                        }
+                        if(soma != 0){
+                            cout << "O produto apresenta unidades. Caso ele, na realidade, não possua mais unidades, sugerimos que vá para a área 'Alterar produto'.";
+                            cout << endl << "Redirecionando para o Menu...";
+                            sleep(3);
+                            menu();
+                        }else{
+                            resposta.clear();
+                            cout << "Deseja deletar o produto " << merc_CO[i].nome_produto << "?\n";
+                            cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
+                            if(resposta == "sim"){
+                                cout << "Produto " << merc_CO[i].nome_produto << "deletado!\n";
+                                merc_CO.erase(merc_CO.begin()+i);
+                                cout << "Retornando para o menu...";
+                                sleep(3); menu();
+                            }else{
+                                 cout << "Certo, redirecionando ao menu...";
+                            }
+                        }
+                    }
+                }
+                if(ind == -1){
+                    cout << "Produto não encontrado. Por favor, verifique se o nome foi digitado corretamente.";
+                    cout << "Redirecionando ao menu...";
+                }
             break;
-            case 6:
-
-            break;
-            case 7:
-
-            break;
-            case 8:
-
-            break;
-            case 9:
-
-            break;
-            case 10:
-
-            break;
-            case 11:
-
-            break;
-            case 12:
-
-            break;
-            case 13:
-
-            break;
-            case 14:
-
-            break;
-            case 15:
-
-            break;
-            case 16:
-
-            break;
-            case 17:
-
-            break;
-            case 18:
-
-            break;
-            case 19:
-
-            break;
-            case 20:
-                cout << "Salvando alterações..." <<endl;
-
-                _sleep(2500);
-                cout << "Saindo..." <<endl;
-            break;
+            
         }
     }while(alternativa != 20);
 }
@@ -622,7 +690,7 @@ void menu(){
 int main(){
 
     menu();
-    _sleep(2500); system("cls");
+    sleep(2); system("cls");
     cout << "Alterações salvas!" << endl;
     return 0;
 }

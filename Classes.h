@@ -4,12 +4,15 @@
 #include <chrono>
 #include <iostream>
 #include <algorithm>
+#include <cctype>
 
 using namespace std;
 using namespace chrono;
 
-void transf(string& nome){
-    transform(nome.begin(), nome.end(), nome.begin(), [](unsigned char c){return tolower(c);});
+void transf(std::string& str) {
+    for (size_t i = 0; i < str.size(); ++i) {
+        str[i] = std::tolower(static_cast<unsigned char>(str[i]));
+    }
 }
 
 typedef struct{
@@ -102,12 +105,20 @@ class pessoa{
 
         virtual string getNome() const{return nome;}
         virtual string getConf() const{return confianca;}
-        virtual int getTipo(){}
+        virtual int getTipo(){return 0;}
 
         void setNome(string nome){this -> nome = nome;}
         void setConf(string conf){confianca = conf;}
+        void setTipo(int t){tipo = t;}
 
-        virtual vector<string> dadosPtabela(){}
+        virtual vector<string> dadosPtabela(){
+            int x = 2;
+            if(x > 1){
+                return {"padrão", "não padrão"};
+            }else{
+                return {"sim"};
+            }
+        }
 
         template <class T>
         bool F_ind(vector<T>& Nome_class, string Nome_p){
@@ -127,14 +138,21 @@ class proletariado : public pessoa{
         tdata dia_pagamento;
     public:
         proletariado() : pessoa("void", "void", 1){setSalario(0.0); setPagamento({0,0,0});}
+        proletariado(string name, string conf, string carg, float sal, tdata pag)
+        : pessoa(name, conf, 1) {
+            setCargo(carg);    
+            setSalario(sal);
+            setPagamento(pag);
+        }
 
         void setCargo(string C){cargo = C;}
         void setSalario(float valor){salario = valor;}
         void setPagamento(tdata data){dia_pagamento = {data.day, data.mon, data.year};}
+        void setTipo(){tipo = 1;}
 
-        string getCargo(){return cargo;}
-        float getSalario(){return salario;}
-        tdata getpay_day(){return dia_pagamento;}
+        string getCargo() const {return cargo;}
+        float getSalario() const {return salario;}
+        tdata getpay_day() const {return dia_pagamento;}
         int getTipo(){return 1;}
 
         bool Pagamento(tdata dia_pagamento){
@@ -181,7 +199,16 @@ class cliente : public pessoa{
             cliente() : pessoa("void", "void", 2){
                 itens.clear();
             }
-            vector<mercadoria> getMerc(){return itens;}
+            cliente(string n, string c, vector<mercadoria> P)
+            : pessoa(n , c , 2){
+                for(size_t i = 0; i<P.size(); i++){
+                    itens.push_back(P[i]);
+                }
+            }
+
+            void setTipo(){tipo = 2;}
+
+            vector<mercadoria> getMerc() const {return itens;}
             int getTipo(){return 2;}
 
             vector<string> dadosPtabela(){
@@ -196,12 +223,25 @@ class cliente : public pessoa{
                     itensStr,
                 };
             }
+
+            float divida(vector<mercadoria> prod){
+                float soma = 0.0;
+                for(size_t i = 0; i<prod.size(); i++){
+                    for(size_t j = 0; j<prod[i].getQuant().size(); j++){
+                        soma += (prod[i].getValor() * prod[i].getQuant()[j]);
+                    }
+                }
+                return soma;
+            }
 };
 
 class Key{
     private:
         string senha;
     public:
+
+        Key(){senha = "void";}
+
         void setSenha(string k){senha = k;}
         string getSenha(){return senha;}
 

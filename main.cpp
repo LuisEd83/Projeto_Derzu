@@ -12,10 +12,6 @@
 using namespace std;
 using namespace chrono;
 
-void transf(string& nome){
-    transform(nome.begin(), nome.end(), nome.begin(), [](unsigned char c){return tolower(c);});
-}
-
 template <class T>
 int escolha(vector<T> Nome_vector, string Nome_p){
     vector<int> indices;
@@ -240,14 +236,10 @@ float conta_cliente (vector<cliente> comprador, string nome_search){
     float valor_conta = 0.0;
     float ind = -1.0;
 
-    for(size_t i = 0; i<comprador.size(); i++){
-        if(comprador[i].getNome() == nome_search){
-            ind = i;
-        }
-    }
+    ind = escolha(comprador, nome_search);
     if(ind == -1.0){
         cout << "Nome não encontrado.\n" << "Verifique se o nome foi digitado incorretamente.";
-        return ind;
+        return -1;
     }else{
         for(size_t i = 0; i<comprador[ind].getMerc().size(); i++){
             for(size_t j = 0; j<comprador[ind].getMerc()[i].getQuant().size(); i++){
@@ -416,7 +408,7 @@ bool extracao_arq_cli(vector<cliente>& client_p_arm, const string& nome_arq){
             int unid_t = 0;
             float v = 0.0;
 
-            arq_cli >> nome_t >> tam >> v >> unid_t >> tam_data;
+            arq_cli >> nome_t >> tam >> unid_t >> v >> tam_data;
             itens_C.setN_prod(nome_t); itens_C.setValor(v); itens_C.setUnid(unid_t);
 
             for(int j = 0; j < tam; j++){
@@ -601,7 +593,7 @@ void menu(Key chave_geral){
     vector<cliente> consumidor_amigo;
     vector<mercadoria> merc_CO, merc_VE;
     vector<proletariado> funcionario;
-    fstream arq_Cliente, arq_Cliente_beckup, arq_mercadoria, arq_mercadoria_beckup, arq_chaveg;
+    fstream arq_Cliente, arq_Cliente_beckup, arq_mercadoria, arq_mercadoria_beckup, arq_chaveg, arq_fun, arq_fun_beckup;
     string resposta = "sim", nome_dproduto = "void", nome_dcliente = "void", nome_dworker = "void", nome_temp = "void", confia = "void";
     cliente comprador_atual;
     mercadoria merc_comprada = mercadoria();
@@ -609,9 +601,21 @@ void menu(Key chave_geral){
     tdata data_dprod = {0,0,0};
     int ind = -1, alternativa;
 
+    int cli_cadast = 0, prod_cadast = 0, fun_cadast = 0, num_acoes = 0;
     
     if(((verificador_arquivo("Clientes.txt") == false) && (verificador_arquivo("Clientes_beckup.txt") == false)) && ((verificador_arquivo("Mercadorias.txt") == false) && (verificador_arquivo("Mercadoria_beckup.txt") == false)) && ((verificador_arquivo("Funcionarios.txt") == false) && (verificador_arquivo("Funcionarios_beckup.txt") == false))){
         cout << "Seja bem-vindo!" << endl;
+        nome_dworker.clear();
+        float v; tdata data_p;
+        cout << "Vejo que é a primeira vez que você abre este programa." << endl;
+        cout << "Portanto, não é ingênuo pensar que você é o cheve!" << endl;
+        cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
+        cout << "Digite o seu salário (em reais):"; cin >> v;
+        cout << "Digite o dia que você recebe o seu lucro (d/m/a): "; cin >> data_p.day >> data_p.mon >> data_p.year;  
+        if(dataValida(data_p) == false){
+            cerr << "Data inválida!" << endl;
+        }
+        funcionario.emplace_back(nome_dworker, "alta", "chefe", v, data_p);
     }else{
         cout << "Seja bem-vindo novamente!" << endl;
         if(verificador_arquivo("Mercadorias.txt") == false){
@@ -665,8 +669,8 @@ void menu(Key chave_geral){
             cout << "11 - Realizar beckup da nova lista de produtos; \n" << "12 - Realizar beckup da nova lista de clientes; \n" << "13 - Realizar beckup de lista de funcionários; \n";
             cout << "14 - Utilizar beckup de produtos mais recente; \n" << "15 - Utilizar beckup de clientes mais recente; \n" << "16 - Utilizar beckup de funcionários mais recente; \n";
             cout << "17 - Saber conta de cliente; \n" << "18 - Realizar conta; \n" << "19 - Separar produto; \n" << "20 - Agrupar unidades; \n";
-            cout << "20 - Realizar receita; \n" << "22 - Alterar cliente; \n" << "23 - Alterar produto; \n" << "25 - Alterar funcioário; \n" << "25 - Relatório de ações; \n";
-            cout << "21 - Alterar senha geral; \n" << "27 - Sair. \n" << endl;
+            cout << "21 - Realizar receita; \n" << "22 - Buscar por (cliente, produto, funcionário);\n " << "23 - Alterar cliente; \n" << "24 - Alterar produto; \n" << "25 - Alterar funcioário; \n";
+            cout << "26 - Alterar senha geral; \n" << "27 - Sair. \n" << endl;
             cout << "Digite a sua resposta: ";
             cin >> alternativa;
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -747,6 +751,7 @@ void menu(Key chave_geral){
                 }
                 consumidor_amigo.push_back(comprador_atual);
                 cout << "Cliente cadastrado com sucesso!";
+                cli_cadast ++;
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
@@ -798,6 +803,7 @@ void menu(Key chave_geral){
                 }
                 merc_CO.push_back(merc_comprada);
                 cout << "Registro completo!";
+                prod_cadast ++;
 
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
@@ -838,6 +844,7 @@ void menu(Key chave_geral){
                 if(dataValida(data_p)){
                     funcionario.emplace_back(nome_dworker, conf, carg, v, data_p);
                     cout << "Funcionário registrado!" << endl;
+                    fun_cadast++;
                 }else{
                     cout << "Data inválida!" << endl;
                 }
@@ -870,7 +877,7 @@ void menu(Key chave_geral){
                         }else{
                             resposta.clear();
                             cout << "Deseja deletar o cliente " << consumidor_amigo[i].getNome() << "?";
-                            cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
+                            cin >> resposta; transf(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
                             if(resposta == "sim"){
                                 cout << "Cliente " << consumidor_amigo[i].getNome() << "deletado!";
                                 consumidor_amigo.erase(consumidor_amigo.begin() + i);
@@ -921,7 +928,7 @@ void menu(Key chave_geral){
                         }else{
                             resposta.clear();
                             cout << "Deseja deletar o produto " << merc_CO[i].getNome() << "?\n";
-                            cin >> resposta; transform(resposta.begin(), resposta.end(), resposta.begin(), [](unsigned char c){return tolower(c);});
+                            cin >> resposta; transf(resposta);
                             if(resposta == "sim"){
                                 cout << "Produto " << merc_CO[i].getNome() << "deletado!\n";
                                 merc_CO.erase(merc_CO.begin()+i);
@@ -1036,13 +1043,12 @@ void menu(Key chave_geral){
 
                 system("cls");
                 resposta.clear();
-                vector<pessoa*> people;
-                vector<cliente> clientes(consumidor_amigo); people.emplace_back(clientes);
-                vector<proletariado> Work(funcionario); people.emplace_back(Work);
-                
+                vector<cliente> clientes(consumidor_amigo); 
+                vector<proletariado> Work(funcionario);
 
                 cout << "Aqui é a área da lista de pessoas." << endl;
                 cout << "Digite qual lista você gostaria de ver (cliente/funcionário): "; getline(cin, resposta); transf(resposta);
+                
                 if(resposta == "cliente"){
                     const int larguraNome = 15;
                     const int larguraConf = 15;
@@ -1052,9 +1058,11 @@ void menu(Key chave_geral){
                         << setw(larguraConf) << "Confiança"
                         << setw(larguraItens * 3) << "Itens" << endl;
                         cout << string(75, '-') << endl;
-                    for(pessoa * ptr : people){
-                        if(ptr->getTipo() == 2){
-                            vector<string> d = ptr->dadosPtabela();
+                    for(const cliente& c : clientes){
+                        pessoa* people = new cliente(c.getNome(), c.getConf(), c.getMerc());
+                        
+                        if(people->getTipo() == 2){
+                            vector<string> d = people->dadosPtabela();
                             cout << left << setw(larguraNome) << d[0]
                             << setw(larguraConf) << d[1]
                             << setw(larguraItens * 3) << d[2] << endl;
@@ -1074,9 +1082,10 @@ void menu(Key chave_geral){
                             << setw(larguraSal) << "Salário (reais)"
                             << setw(larguraDat) << "Pagamento" << endl;
                             cout << string(75, '-') << endl;
-                        for(pessoa * ptr : people){
-                            if(ptr->getTipo() == 1){
-                                vector<string> d = ptr->dadosPtabela();
+                        for(const proletariado& p : Work){
+                            pessoa* people = new proletariado(p.getNome(), p.getConf(), p.getCargo(), p.getSalario(), p.getpay_day());
+                            if(people->getTipo() == 1){
+                                vector<string> d = people->dadosPtabela();
                                 cout << left << setw(larguraNome) << d[0]
                                     << setw(larguraConf) << d[1]
                                     << setw(larguraCarg) << d[2]
@@ -1086,6 +1095,7 @@ void menu(Key chave_geral){
                         }
                     }else{
                         cout << "Ops! Ocorreu um erro de digitação." << endl;
+                        cout << "Não foi possível mostrar os dados." << endl;
                     }
                 }
                 if(resp_saida(resposta)){
@@ -1320,9 +1330,9 @@ void menu(Key chave_geral){
                         sleep(2); system("cls");
                         break;
                     }
-                }else{
-                    cout << "Redirecionando para o menu...";
-                    sleep(2); system("cls");
+                }
+                if(resp_saida(resposta)){
+                    cout << "Retornando ao menu...";
                 }
 
             break;
@@ -1342,19 +1352,57 @@ void menu(Key chave_geral){
                     cout << "Aguarde um momento...\n";
                     if(copiararq("Clientes_beckup.txt","Clientes.txt")){
                         cout << "Beckup feito com sucesso!\n";
-                        sleep(2); system("cls");
-                        break;
                     }
                 }else{
-                    cout << "Redirecionando para o menu...";
-                    sleep(2); system("cls");
+                    cout << "Beckup não realizado!" << endl;
+                }
+                if(resp_saida(resposta)){
+                    cout << "Retornando ao menu...";
                 }
             break;
             }
             case 16:{
-            
+                cout << "Aqui é a área para utilizar o beckup de funcionários. \n";
+                if(verific(resposta)){
+                    system("cls");
+                    break;
+                }   
+                system("cls");
+                string senha_t;
+                nome_dworker.clear();
+                ind = -1;
+                
+                cout << "Aqui é a área para utilizar o beckup de clientes. \n";
+                cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
+                ind = escolha(funcionario, nome_dworker);
+                if(ind == -1){
+                    cout << "Nome não encontrado.";
+                    if(resp_saida(resposta)){
+                        cout << "Retornando ao menu...";
+                        break;
+                    }
+                }
+                cout << "Digite a senha: "; getline(cin, senha_t);
+                if(chave_geral.verific_S(senha_t, funcionario[ind])){
+                    cout << "Acesso liberado!" << endl;
+                    cout << "Caso o beckup seja utilizado, as informações alteradas na lista de clientes serão peridas.\n";
+                    cout << "Deseja utilizar o beckup? (sim/não)\n";
+                    cin >> resposta; transf(resposta);
+                    if(resposta == "sim"){
+                        cout << "Aguarde um momento...\n";
+                        if(copiararq("Clientes_beckup.txt","Clientes.txt")){
+                            cout << "Beckup feito com sucesso!\n";
+                        }
+                    }
+                }else{
+                    cout << "Ops! senha e/ou nome inválidos!" << endl;
+                }
+                if(resp_saida(resposta)){
+                    cout << "Retornando ao menu...";
+                    break;
+                }
             break;
-            }//utilizar beckup de funcionario
+            }
             case 17:{
                 cout << "Aqui é a área para realizar a conta do cliente. \n";
                 if(verific(resposta)){
@@ -1520,7 +1568,93 @@ void menu(Key chave_geral){
                 }
             break;
             }
+
             case 22:{
+                cout << "Aqui é a área de busca.\n";
+                if(verific(resposta)){
+                    system("cls");
+                    break;
+                }
+                system("cls");
+                nome_dcliente.clear(); nome_dproduto.clear(); nome_dworker.clear();
+                resposta.clear();
+
+                cout << "Aqui é a área de busca.\n";
+                cout << "O que você está produrando no sistema? (cliente, produto, funcionário)" << endl; getline(cin,resposta); transf(resposta);
+                if(resposta != "cliente" || resposta != "produto" || resposta != "funcionário"){
+                    cerr << "Resposta inválida" << endl;
+                    if(resp_saida(resposta)){
+                        cout << "Retornando ao menu...\n";
+                        break;
+                    }
+                }
+                if(resposta == "cliente"){
+                    ind = -1;
+                    cout << "Digite o nome do cliente: "; getline(cin, nome_dcliente); transf(nome_dcliente);
+                    ind = escolha(consumidor_amigo, nome_dcliente);
+                    if(ind == -1){
+                        cerr << "Cliente não encontrado!" << endl;
+                        if(resp_saida(resposta)){
+                            cout << "Retornando ao menu...\n";
+                            break;
+                        }
+                    }
+                    cout << "Aqui estão as informações deste cliente: " << endl;
+                    cout << " - Nome: " << consumidor_amigo[ind].getNome() << endl;
+                    cout << " - Confiança: " << consumidor_amigo[ind].getConf() << endl;
+                    cout << " - Itens pegos : " << endl;
+                    for(size_t i = 0; i<consumidor_amigo[ind].getMerc().size(); i++){
+                        cout << "  - " << consumidor_amigo[ind].getMerc()[i].getNome();
+                    }
+                    cout << " - Dívida (em reais): " << consumidor_amigo[ind].divida(consumidor_amigo[ind].getMerc());
+
+                }
+                if(resposta == "produto"){
+                    ind = -1;
+                    cout << "Digite o nome do produto: "; getline(cin, nome_dproduto); transf(nome_dproduto);
+                    ind = escolha(merc_CO, nome_dproduto);
+                    if(ind == -1){
+                        cerr << "Produto não encontrado!" << endl;
+                        if(resp_saida(resposta)){
+                            cout << "Retornando ao menu...\n";
+                            break;
+                        }
+                    }
+
+                    cout << "Aqui estão as informações deste produto: " << endl;
+                    cout << " - Nome: " << merc_CO[ind].getNome() << endl;
+                    cout << " - Quantidades do produto (por validade): " << endl;
+                    for(size_t i = 0; i<merc_CO[ind].getQuant().size(); i++){
+                        cout << "  - " << merc_CO[ind].getQuant()[i] << " || " << merc_CO[ind].getValid()[i].day << "/" << merc_CO[ind].getValid()[i].mon << "/" << merc_CO[ind].getValid()[i].year << endl;
+                    }
+                    cout << " - Unidade por pacote: " << merc_CO[ind].getUnid() << endl;
+                    cout << " - Valor (em reais): " << merc_CO[ind].getValor() << endl; 
+                }
+                if(resposta == "funcionário"){
+                    ind = -1;
+                    cout << "Digite o nome do funcionário: "; getline(cin, nome_dworker); transf(nome_dworker);
+                    ind = escolha(funcionario, nome_dworker);
+                    if(ind == -1){
+                        cerr << "Nome não encontrado!" << endl;
+                        if(resp_saida(resposta)){
+                            cout << "Retornando ao menu...\n";
+                            break;
+                        }
+                    }
+
+                    cout << "Aqui estão as informações do funcionário: " << endl;
+                    cout << " - Nome: " << funcionario[ind].getNome() << endl;
+                    cout << " - Confiança: " << funcionario[ind].getConf() << endl;
+                    cout << " - Cargo: " << funcionario[ind].getCargo() << endl;
+                    cout << " - Salário (em reais): " << funcionario[ind].getSalario() << endl;
+                    cout << " - Dia de pagamento: " << funcionario[ind].getpay_day().day << "/" << funcionario[ind].getpay_day().mon << "/" << funcionario[ind].getpay_day().year << endl;
+                }
+                if(resp_saida(resposta)){
+                    cout << "Retornando ao menu...\n";
+                }
+            break;
+            }
+            case 23:{
                 cout << "Aqui é a área para alterar o cliente.\n";
                 if(verific(resposta)){
                     system("cls");
@@ -1788,7 +1922,7 @@ void menu(Key chave_geral){
                 }
             break;
             }
-            case 23:{
+            case 24:{
                 cout << "Aqui é a área para alterar o produto.\n";
                 if(verific(resposta)){
                     system("cls");
@@ -2021,7 +2155,7 @@ void menu(Key chave_geral){
                 }
             break;
             }
-            case 24:{
+            case 25:{
                 cout << "Aqui é a área para alterar funcionário." << endl;
                 if(verific(resposta)){
                     system("cls");
@@ -2255,10 +2389,6 @@ void menu(Key chave_geral){
                 }
             break;
             }
-            case 25:{
-            
-            break;
-            }//realtório de ações
             case 26:{
                 cout << "Aqui é a área para alterar a senha geral." << endl;
                 if(verific(resposta)){
@@ -2304,9 +2434,65 @@ void menu(Key chave_geral){
             }
             case 27:{
                 cout << "Salvando alterações...\n" <<endl;
+                arq_Cliente.open("Clientes.txt", fstream::out); arq_mercadoria.open("Mercadorias.txt", fstream::out); arq_fun.open("Funcionarios.txt", fstream::out); arq_chaveg.open("Chave_g.txt", fstream::out);
+                if(!arq_Cliente.is_open() || !arq_mercadoria.is_open() || !arq_chaveg.is_open() || !arq_fun.is_open()){
+                    cerr << "Ops! não foi possível abrir os arquivos!";
+                    if(resp_saida(resposta)){
+                        cout << "Retornando ao menu...\n";
+                        break;
+                    }
+                }
+                
+                for(size_t i = 0; i<consumidor_amigo.size(); i++){
+                    comprador_atual = consumidor_amigo[i];
+                    arq_Cliente << comprador_atual.getNome() << endl;
+                    arq_Cliente << comprador_atual.getConf() << endl;
+                    for(size_t j = 0; j<comprador_atual.getMerc().size(); j++){
+                        arq_Cliente << comprador_atual.getMerc()[j].getNome() << " ";
+                        for(size_t k = 0; k<comprador_atual.getMerc()[j].getQuant().size(); k++){
+                            arq_Cliente << comprador_atual.getMerc()[j].getQuant()[k] << " ";
+                        }
+                        arq_Cliente << endl;
+                        arq_Cliente << comprador_atual.getMerc()[j].getUnid() << endl;
+                        arq_Cliente << comprador_atual.getMerc()[j].getValor() << endl;
+                        for(size_t k = 0; k<comprador_atual.getMerc()[j].getQuant().size(); k++){
+                            arq_Cliente << comprador_atual.getMerc()[j].getValid()[k].day << "/" << comprador_atual.getMerc()[j].getValid()[k].mon << "/" << comprador_atual.getMerc()[j].getValid()[k].year << " ";
+                        }
+                        arq_Cliente << endl;
+                    }
+                }
 
+                for(size_t i = 0; i<merc_CO.size(); i++){
+                    merc_comprada = merc_CO[i];
+                    arq_mercadoria << merc_comprada.getNome() << endl;
+                    for(size_t j=0; j<merc_comprada.getQuant().size(); j++){
+                        arq_mercadoria << merc_comprada.getQuant()[j] << " ";
+                    }
+                    arq_mercadoria << endl;
+                    arq_mercadoria << merc_comprada.getUnid() << endl;
+                    arq_mercadoria << merc_comprada.getValor() << endl;
+                    for(size_t j=0; j<merc_comprada.getQuant().size(); j++){
+                        arq_mercadoria << merc_comprada.getValid()[j].day << "/" << merc_comprada.getValid()[j].mon << "/" << merc_comprada.getValid()[j].year << " ";
+                    }
+                    arq_mercadoria << endl;
+                }
+
+                for(size_t i = 0; i<funcionario.size(); i++){
+                    worker = funcionario[i];
+                    arq_fun << worker.getNome() << endl;
+                    arq_fun << worker.getConf() << endl;
+                    arq_fun << worker.getCargo() << endl;
+                    arq_fun << worker.getSalario() << endl;
+                    arq_fun << worker.getpay_day().day << "/" << worker.getpay_day().mon << "/" << worker.getpay_day().year; 
+                }
+
+                arq_chaveg << chave_geral.getSenha() << endl;
+
+                arq_Cliente.close(); arq_mercadoria.close(); arq_chaveg.close(); arq_fun.close();
+                cout << "Arquivos salvos!" <<endl;
+                sleep(1);
+                cout << "Saindo...";
                 sleep(2);
-                cout << "Saindo..." <<endl;
             break;
             default:
                 cout << "Opção inválida.\n" << endl;

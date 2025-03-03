@@ -101,6 +101,8 @@ class pessoa{
         string confianca;
         int tipo;
     public:
+        pessoa(){nome = "Indefinido"; confianca = "Indefinido"; tipo = 0;}
+        pessoa(int t){nome = "Indefinido"; confianca = "Indefinido"; tipo = t;}
         pessoa(string n, string con, int t){nome = n; confianca = con; tipo = t;}
 
         virtual string getNome() const{return nome;}
@@ -137,7 +139,7 @@ class proletariado : public pessoa{
         float salario;
         tdata dia_pagamento;
     public:
-        proletariado() : pessoa("void", "void", 1){setSalario(0.0); setPagamento({0,0,0});}
+        proletariado() : pessoa(1){setSalario(0.0); setPagamento({0,0,0});}
         proletariado(string name, string conf, string carg, float sal, tdata pag)
         : pessoa(name, conf, 1) {
             setCargo(carg);    
@@ -145,6 +147,8 @@ class proletariado : public pessoa{
             setPagamento(pag);
         }
 
+        string getNome(){return nome;}
+        string getConf(){return confianca;}
         void setCargo(string C){cargo = C;}
         void setSalario(float valor){salario = valor;}
         void setPagamento(tdata data){dia_pagamento = {data.day, data.mon, data.year};}
@@ -196,17 +200,21 @@ class cliente : public pessoa{
     protected:
         vector<mercadoria> itens;
     public:
-            cliente() : pessoa("void", "void", 2){
+            cliente() : pessoa(2){
                 itens.clear();
             }
-            cliente(string n, string c, vector<mercadoria> P)
-            : pessoa(n , c , 2){
-                for(size_t i = 0; i<P.size(); i++){
-                    itens.push_back(P[i]);
+
+            cliente(string nome, string conf, vector<mercadoria> merc)
+            :  pessoa(nome, conf, 2), itens(merc) {} 
+
+            string getNome(){return nome;}
+            string getConf(){return confianca;}
+            void setTipo(){tipo = 2;}
+            void setMerc(vector<mercadoria> merc){
+                for(mercadoria m : merc){
+                    itens.push_back(m);
                 }
             }
-
-            void setTipo(){tipo = 2;}
 
             vector<mercadoria> getMerc() const {return itens;}
             int getTipo(){return 2;}
@@ -244,7 +252,6 @@ class Key{
 
         void setSenha(string k){senha = k;}
         string getSenha(){return senha;}
-
 
         bool verfic_tam(string k){
             size_t n = 0;

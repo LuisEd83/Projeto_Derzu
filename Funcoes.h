@@ -192,7 +192,7 @@ float conta_cliente (vector<cliente> comprador, string nome_search){
     ind = escolha(comprador, nome_search);
     if(ind == -1.0){
         cout << "Nome não encontrado.\n" << "Verifique se o nome foi digitado incorretamente.";
-        return -1;
+        return -1.0;
     }else{
         for(size_t i = 0; i<comprador[ind].getMerc().size(); i++){
             for(size_t j = 0; j<comprador[ind].getMerc()[i].getQuant().size(); i++){
@@ -306,7 +306,7 @@ void verfic_venc(vector<mercadoria>& itens_p_verific){
     }
 }
 
-bool extracao_arq_prodCO(vector<mercadoria>& itens_p_arm, const string& nome_arq){
+bool extracao_arq_prod(vector<mercadoria>& itens_p_arm, const string& nome_arq){
     string nome_p_prod;
     vector<int> num_quant;
     int quant_pacot;
@@ -363,24 +363,29 @@ vector<shared_ptr<pessoa>> extracao_arq_pes(const string nome_arq){
         }else{
             if(tipo == 2){
                 string nome_prod;
-                int tam_qtd, unid, tam_data;
+                int tam_qtd, unid, tam_data, tam;
                 float v;
                 vector<int> num_quant;
                 vector<tdata> data_t;
+                vector<mercadoria> merc;
                 
-                arq_pes >> nome_prod >> tam_qtd >> unid >> v >> tam_data;
-                for(int i = 0; i<tam_qtd; i++){
-                    int num_q;
-                    arq_pes >> num_q;
-                    num_quant.push_back(num_q);
+                arq_pes >> tam;
+                for(int i = 0; i<tam; i++){
+                    arq_pes >> nome_prod >> tam_qtd >> unid >> v >> tam_data;
+                    for(int j = 0; j<tam_qtd; j++){
+                        int num_q;
+                        arq_pes >> num_q;
+                        num_quant.push_back(num_q);
+                    }
+                    for(int j = 0; j<tam_data; j++){
+                        tdata data;
+                        arq_pes >> data.day >> data.mon >> data.year;
+                        data_t.push_back(data);
+                    }
+                    merc.emplace_back(nome_prod, num_quant, unid, v, data_t);
                 }
-                for(int i = 0; i<tam_data; i++){
-                    tdata data;
-                    arq_pes >> data.day >> data.mon >> data.year;
-                    data_t.push_back(data);
-                }
-                mercadoria merc_t = mercadoria(nome_prod, num_quant, unid, v, data_t);
-                people.emplace_back(make_shared<cliente>(name, conf, merc_t));
+                
+                people.emplace_back(make_shared<cliente>(name, conf, merc));
             }else{
                 cerr << "Houve um erro durante a extração do arquivo." << endl;
                 return people;
@@ -411,10 +416,10 @@ bool extracao_arq_key(Key& chave, const string& nome_arq){
 void extracao_vector(vector<shared_ptr<pessoa>>& people, vector<shared_ptr<proletariado>>& workers, vector<shared_ptr<cliente>>& clientes, vector<cliente>& cli, vector<proletariado>& w){
     for(const auto& pessoa : people){
         if(auto c = dynamic_pointer_cast<cliente>(pessoa)){
-            clientes.emplace_back(c);
+            clientes.push_back(c);
         }else{
             if(auto w = dynamic_pointer_cast<proletariado>(pessoa)){
-                workers.emplace_back(w);
+                workers.push_back(w);
             }
         }
     }
@@ -436,6 +441,15 @@ void extracao_vector(vector<shared_ptr<pessoa>>& people, vector<shared_ptr<prole
     }
 }
 
+void inversa_extracao_vector(vector<shared_ptr<pessoa>>& people, vector<cliente> cli, vector<proletariado> w){
+    vector<cliente> clientes(cli);
+    vector<proletariado> workers(w);
+
+    people.clear();
+
+    for(auto& C : clientes){people.push_back(make_shared<cliente>(move(C)));}
+    for(auto& W : workers){people.push_back(make_shared<proletariado>(move(W)));}
+}
 
 bool quadro_prod(vector<mercadoria> produtos){
     const int larguraNome_p = 10;

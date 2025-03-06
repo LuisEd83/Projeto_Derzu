@@ -1699,7 +1699,7 @@ class Gerenciador{
             string resposta;
 
             cout << "Salvando alterações...\n" <<endl;
-            fstream arq_mercadoriaCO("Mercadorias.txt", fstream::out), arq_chaveg("Chave_g.txt", fstream::out), arq_pessoa("Pessoas.txt", fstream::out);
+            fstream arq_mercadoriaCO("Mercadorias.txt", fstream::out), arq_chaveg("Chave_g.txt", fstream::out), arq_beckup_chaveg("Chave_g_beckup", fstream::out), arq_pessoa("Pessoas.txt", fstream::out);
             fstream arq_mercadoriaVE("Mercadorias_V.txt", fstream::out);
             if(!arq_pessoa.is_open() || !arq_mercadoriaCO.is_open() || !arq_chaveg.is_open()){
                 cerr << "Ops! não foi possível abrir os arquivos!";
@@ -1737,6 +1737,7 @@ class Gerenciador{
             }
 
             arq_chaveg << chave_geral.getSenha() << endl;
+            arq_beckup_chaveg << chave_geral.getSenha() << endl;
 
             for(auto& pessoa : people){
                 if(auto c = dynamic_pointer_cast<cliente>(pessoa)){
@@ -1763,7 +1764,7 @@ class Gerenciador{
                 }
             }
 
-            arq_pessoa.close(); arq_mercadoriaCO.close(); arq_chaveg.close(); arq_mercadoriaVE.close();
+            arq_pessoa.close(); arq_mercadoriaCO.close(); arq_chaveg.close(); arq_mercadoriaVE.close(); arq_beckup_chaveg.close();
             return true;
         }
 };

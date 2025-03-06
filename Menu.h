@@ -20,7 +20,7 @@ void menu(Key chave_geral){
     int cli_cadast = 0, prod_cadast = 0, fun_cadast = 0;
     int cli_ex = 0, prod_ex = 0, fun_ex = 0, num_prod_v = 0;
     string resposta, nome_dworker, senha;
-    int alternativa;
+    int alternativa, ind = -1;
     
     if(((verificador_arquivo("Mercadorias.txt") == false) && (verificador_arquivo("Mercadoria_beckup.txt") == false)) && ((verificador_arquivo("Pessoas.txt") == false) && (verificador_arquivo("Pessoa_beckup.txt") == false))){
         cout << "Seja bem-vindo!" << endl;
@@ -55,11 +55,13 @@ void menu(Key chave_geral){
             cout << "O arquivo Pessoas.txt está vazio, será necessário utilizar o último beckup feito." << endl;
             if(copiararq("Pessoa_beckup.txt", "Pessoas.txt")){
                 people = extracao_arq_pes("Pessoas.txt");
+                extracao_vector(people, work, clientes, consumidor_amigo, funcionario);
             }else{
                 cout << "Foi impossível realizar o beckup dos arquivos!" << endl;
             }
         }else{
             people = extracao_arq_pes("Pessoas.txt");
+            extracao_vector(people, work, clientes, consumidor_amigo, funcionario);
         }
         if(verificador_arquivo("Mercadorias.txt") == false){
             cout << "O arquivo Mercadorias_V.txt está vazio, será necessário utilizar o último beckup feito." << endl;
@@ -71,11 +73,29 @@ void menu(Key chave_geral){
         }else{
             extracao_arq_prod(merc_VE, "Mercadorias_V.txt");
         }
-        
+        if(verificador_arquivo("Chave_g.txt") == false){
+            cout << "O arquivo Chave_g.txt está vazio, será necessário utilizar o último beckup feito." << endl;
+            if(copiararq("Chave_g_beckup.txt", "Chave_g.txt") == true){
+                extracao_arq_key(chave_geral, "Chave_g.txt");
+            }else{
+                do{
+                    cerr << "A senha geral foi perdida! Por favor, digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
+                    ind = escolha(funcionario, nome_dworker);
+                    
+                    if(funcionario[ind].getCargo() == "chefe"){
+                        cout << "Acesso liberado!" << endl;
+                        cout << "Digite a nova senha: "; getline(cin, senha);
+                        chave_geral.setSenha(senha);
+                        cout << "Nova senha criada!" << endl;
+                    }else{
+                        cerr << "O nome digitado não é o chefe!" << endl;
+                    }
+                }while(ind == -1 || funcionario[ind].getCargo() != "chefe");
+            }
+        }  
     }
     resp_saida(resposta);
 
-    extracao_vector(people, work, clientes, consumidor_amigo, funcionario);
     do{
         do{
             cout << "Selecione a sua próxima ação (escreva o número da opção):" << endl;

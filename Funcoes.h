@@ -409,7 +409,7 @@ bool extracao_arq_key(Key& chave, const string& nome_arq){
     arq_key >> senha;
     chave.setSenha(senha);
     arq_key.close();
-    cout << "A extração de dados foi realizada com sucesso" << endl;
+    cout << "A extração de dados foi realizada com sucesso!" << endl;
     return true;
 }
 

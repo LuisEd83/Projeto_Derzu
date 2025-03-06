@@ -105,9 +105,9 @@ class pessoa{
         pessoa(int t){nome = "Indefinido"; confianca = "Indefinido"; tipo = t;}
         pessoa(string n, string con, int t){nome = n; confianca = con; tipo = t;}
 
-        virtual string getNome() const{return nome;}
-        virtual string getConf() const{return confianca;}
-        virtual int getTipo(){return 0;}
+        string getNome() const{return nome;}
+        string getConf() const{return confianca;}
+        int getTipo(){return 0;}
 
         void setNome(string nome){this -> nome = nome;}
         void setConf(string conf){confianca = conf;}
@@ -130,6 +130,13 @@ class pessoa{
                 if(p != string::npos){return true;}
             }
             return false;
+        }
+
+        virtual vector<string> dadosPtabela(){
+            return {
+                getNome(),
+                getConf(),
+                };
         }
 };
 

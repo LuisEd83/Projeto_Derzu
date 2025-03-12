@@ -161,134 +161,157 @@ class Gerenciador{
             }
         }
 
-        bool ex_cli(vector<cliente>& amigo, int* cli_ex){
+        bool ex_cli(vector<cliente>& amigo, int* cli_ex) {
             string resposta, nome_dcliente;
             int ind = -1;
-
-            cout << "Aqui é a área para excluir um cliente. \n";
-            nome_dcliente.clear();
+        
+            cout << "Área para excluir um cliente.\n";
+            resposta.clear();
             if(verific(resposta)){
                 system("cls");
                 return false;
-            }   
+            }
+        
             system("cls");
-            cout << "Aqui é a área para excluir um cliente. \n";
             cout << "Digite o nome do cliente corretamente: ";
-            cin.ignore(); getline(cin, nome_dcliente); transf(nome_dcliente);
-
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+            getline(cin, nome_dcliente);
+        
             ind = escolha(amigo, nome_dcliente);
-            if(ind == -1){
+            if (ind == -1) {
                 cerr << "Cliente não encontrado!" << endl;
                 return false;
             }
-
+        
             cout << "Cliente encontrado!" << endl;
-            if(!(amigo[ind].getMerc().empty())){
-                cout << "Você não pode deletar este cliente, pois apresenta itens comprados!\n";
-                cout << "Caso o cliente tenha pagado tudo, sugerimos que vá primeiro para a área 'Alterar cliente' e depois retorne.\n";
-                cout << "Redirecionando ao Menu...";
+            if (!amigo[ind].getMerc().empty()) {
+                cout << "Não é possível deletar o cliente. Itens pendentes!\n";
                 return false;
-            }else{
-                resposta.clear();
-                cout << "Deseja deletar o cliente " << amigo[ind].getNome() << "? (sim/não)" << endl;
-                cin >> resposta; transf(resposta);
-                if(resposta == "sim"){
+            }
+        
+            cout << "Deseja deletar o cliente " << amigo[ind].getNome() << "? (sim/não): ";
+            cin >> resposta; transf(resposta);
+        
+            if (resposta == "sim") {
+                if (ind >= 0 && ind < amigo.size()) {
                     amigo.erase(amigo.begin() + ind);
+                    if(cli_ex != nullptr){
+                        (*cli_ex)++;
+                    }
                     cout << "Cliente deletado!" << endl;
-                    (*cli_ex)++;
                     return true;
                 }
             }
             return false;
         }
 
-        bool ex_prod(vector<mercadoria>& merc_c, int* prod_ex){
-            string nome_dproduto, resposta;
-            int ind = -1, soma;
-
-            cout << "Aqui é a área de exclusão de produto.\n";
-            if(verific(resposta)){
+        bool ex_prod(vector<mercadoria>& merc_c, int* prod_ex) {
+            string nome_dproduto, resposta = "";
+            int ind = -1, soma = 0;
+        
+            cout << "Área de exclusão de produto.\n";
+            if (verific(resposta)) {
                 system("cls");
                 return false;
             }
+        
             system("cls");
-            cout << "Aqui é a área de exclusão de produto.\n";
             cout << "Digite o nome do produto: ";
-            cin.ignore(); getline(cin, nome_dproduto); transf(nome_dproduto);
-
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            getline(cin, nome_dproduto); transf(nome_dproduto);
+        
             ind = escolha(merc_c, nome_dproduto);
-            if(ind == -1){
-                cerr << "Produto não encontrado. Por favor, verifique se o nome foi digitado corretamente." << endl;
+            if (ind == -1) {
+                cerr << "Produto não encontrado." << endl;
                 return false;
             }
-
+        
             cout << "Produto encontrado!" << endl;
-            for(int quant : merc_c[ind].getQuant()){
+            for (int quant : merc_c[ind].getQuant()) {
                 soma += quant;
             }
-            if(soma != 0){
-                cout << "O produto apresenta unidades. Caso ele, na realidade, não possua mais unidades, sugerimos que vá para a área 'Alterar produto'." << endl;
+        
+            if (soma != 0) {
+                cout << "O produto possui unidades em estoque." << endl;
                 return false;
-            }else{
-                resposta.clear();
-                cout << "Deseja deletar o produto " << merc_c[ind].getNome() << "?\n";
-                cin >> resposta; transf(resposta);
-                if(resposta == "sim"){
-                    merc_c.erase(merc_c.begin()+ind);
-                    cout << "Produto deletado!\n";
-                    (*prod_ex)++;
+            }
+        
+            cout << "Deseja deletar o produto " << merc_c[ind].getNome() << "? (sim/não): " << endl;
+            getline(cin, resposta); transf(resposta);
+        
+            if (resposta == "sim") {
+                if (ind >= 0 && ind < merc_c.size()) {
+                    merc_c.erase(merc_c.begin() + ind);
+                    if (prod_ex != nullptr) {
+                        (*prod_ex)++;
+                    }
+                    cout << "Produto deletado!" << endl;
                     return true;
                 }
             }
             return false;
         }
 
-        bool demissao(vector<proletariado>& worker, Key chave_geral, int* fun_ex){
+        bool demissao(vector<proletariado>& worker, Key chave_geral, int* fun_ex) {
             string chave_comp, nome_dworker, resposta;
             int ind = -1;
-
-            cout << "Aqui é a área de demissão de funcionário.\n";
-            do{
-                if(verific(resposta)){
+        
+            cout << "Área de demissão de funcionário.\n";
+            do {
+                resposta.clear();
+                if (verific(resposta)) { // Supondo que 'verific' retorna true para cancelar
                     system("cls");
-                    break;
+                    return false;
                 }
+        
                 system("cls");
-
-                if(chave_geral.getSenha() == "_INDEFINIDA_"){
-                    cout << "A senha ainda não foi definida, por favor, altere-a primeiro." << endl;
-                    break;
+                if (chave_geral.getSenha() == "INDEFINIDA") {
+                    cout << "Defina a senha primeiro!" << endl;
+                    return false;
                 }
-                cout << "Aqui é a área de demissão de funcionário.\n";
-                cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
-                ind = escolha(worker, nome_dworker); cin.ignore();
-
-                if(ind == -1){
-                    cout << "Não foi possível encontrar o seu nome." << endl;
-                }
-            }while(ind == -1);
-            if(ind == -1){
-                return false;
-            }
-            cout << "Digite a senha geral: "; cin.ignore(); getline(cin, chave_comp);
-            if(chave_geral.verific_S(chave_comp, worker[ind])){
-                nome_dworker.clear();
-                cout << "Acesso liberado!" << endl;
-                
-                cout << "Digite o nome do funcionário que será demitido: "; getline(cin, nome_dworker); transf(nome_dworker);
+        
+                cout << "Digite seu nome: ";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Limpa o buffer
+                getline(cin, nome_dworker);
+                // transf(nome_dworker); // Removido (não definido)
+        
                 ind = escolha(worker, nome_dworker);
-                if(ind == -1){
-                    cout << "O nome digitado não foi encontrado no nosso sistema." << endl;
-                    cout << "Veja os nomes de funcionários escolhendo a opção 'lista de funcionários'." << endl;
-                }else{
-                    cout << "Deseja mesmo demitir este funcionário? (sim/não)" << endl; getline(cin, resposta); transf(resposta);
-                    if(resposta == "sim"){
-                        worker.erase(worker.begin() + ind);
+                if (ind == -1) {
+                    cout << "Nome não encontrado. Tente novamente ou digite 'sair': ";
+                    getline(cin, resposta);
+                    if (resposta == "sair") break;
+                }
+            } while (ind == -1);
+        
+            if (ind == -1 || ind >= worker.size()) return false;
+        
+            cout << "Digite a senha geral: ";
+            getline(cin, chave_comp);
+        
+            if (chave_geral.verific_S(chave_comp, worker[ind])) {
+                cout << "Acesso liberado!" << endl;
+                cout << "Digite o nome do funcionário a ser demitido: ";
+                getline(cin, nome_dworker); transf(nome_dworker);
+        
+                int ind_demitir = escolha(worker, nome_dworker);
+                if (ind_demitir == -1) {
+                    cout << "Funcionário não encontrado." << endl;
+                    return false;
+                }
+        
+                cout << "Deseja demitir " << worker[ind_demitir].getNome() << "? (sim/não): ";
+                getline(cin, resposta); transf(resposta);
+        
+                if (resposta == "sim") {
+                    if (ind_demitir >= 0 && ind_demitir < worker.size()) {
+                        worker.erase(worker.begin() + ind_demitir);
+                        if (fun_ex != nullptr) (*fun_ex)++;
                         cout << "Funcionário demitido!" << endl;
-                        fun_ex += 1;
                         return true;
                     }
-                }           
+                }
+            } else {
+                cout << "Senha incorreta ou falta de privilégios!" << endl;
             }
             return false;
         }
@@ -760,7 +783,7 @@ class Gerenciador{
                 cout << "Digite quanto o cliente pagou (em reais): "; cin >> pagamento_cl; 
                 troco = pagamento_cl - valor_conta;
                 if(troco > 0.0){
-                    cout << "Valor do troco (em reais):" << troco << endl;
+                    cout << "Valor do troco (em reais): " << troco << endl;
                 }else{
                     if(troco == 0){
                         cout << "Não há troco." << endl;
@@ -769,47 +792,66 @@ class Gerenciador{
                         cout << "O cliente está devendo (em reais): " << -troco << endl;
                     }
                 }
-                cout << "Digite 'sim' para sair." << endl; cin >> resposta; transf(resposta);
+                cout << "Digite 'sim' para sair." << endl; getline(cin,resposta); transf(resposta);
                 if(resposta == "sim"){
                     cout << "Se o cliente não pagou, cadastre-o para controlar suas finâncias." << endl;
                     cout << "Após o cadastro, vá em 'alterar cliente' para diminuir o valor da compra." << endl;
+                }else{
+                    cout << "Retornando para digitar quanto o cliente pagou." << endl;
                 }
             }while((troco < 0) || resposta != "sim");
         }
 
-        void separador_prod(vector<mercadoria> merc_c){
+        void separador_prod(vector<mercadoria>& merc_c){
             string resposta, nome_dproduto, data_t;
             tdata data_dprod;
             int quant_sep, ind = -1;
-
+        
             cout << "Aqui é a área de separação de produto.\n";
-                if(verific(resposta)){
-                    system("cls");
-                    return;
-                }
-
+            cout << "Deseja continuar? (s/n): ";
+            getline(cin, resposta); transf(resposta);
+            
+            if(verific(resposta)) {
                 system("cls");
-                cout << "Aqui é a área de separação de produto.\n";
-                cout << "Digite o nome do produto: "; cin.ignore(); getline(cin, nome_dproduto); transf(nome_dproduto);
-
-                ind = escolha(merc_c, nome_dproduto);
-                
-                if(ind < 0){
-                    cout << "Produto não encontrado." << endl;
-                    return;
-                }
-                cout << "\nDigite quantas vezes essa separação ocorrerá: "; cin >> quant_sep; cin.ignore();
-                do{
+                return;
+            }
+        
+            system("cls");
+            cout << "Aqui é a área de separação de produto.\n";
+            cout << "Digite o nome do produto: "; 
+            getline(cin, nome_dproduto); 
+            transf(nome_dproduto);
+        
+            ind = escolha(merc_c, nome_dproduto);
+            
+            if(ind < 0) {
+                cout << "Produto não encontrado." << endl;
+                return;
+            }
+        
+            cout << "\nDigite quantas vezes essa separação ocorrerá: "; 
+            while (!(cin >> quant_sep)) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Entrada inválida. Digite um número: ";
+            }
+            cin.ignore();
+        
+            for (int i = 0; i < quant_sep; i++) {
+                do {
                     data_t.clear();
-                    cout << "\nDigite a data de validade do produto a ser desagrupado (d/m/a): "; getline(cin, data_t);
-                    if(!lerData(data_t, data_dprod)){
+                    cout << "\nDigite a data de validade do produto " << i+1 << " (d/m/a): "; 
+                    getline(cin, data_t);
+                    if(!lerData(data_t, data_dprod) || !dataValida(data_dprod)) {
                         cerr << "Data inválida, tente novamente." << endl;
                     }
-                }while(!dataValida(data_dprod));
-                if(desagrupador(merc_c, ind, quant_sep, data_dprod) == false){
-                    cerr << "Não foi possível realizar a separação do produto." << endl;
+                } while (!lerData(data_t, data_dprod) || !dataValida(data_dprod));
+        
+                if(!desagrupador(merc_c, ind, 1, data_dprod)){
+                    cerr << "Falha na separação " << i+1 << "." << endl;
                     return;
                 }
+            }
         }
 
         void agrupador_prod(vector<mercadoria> merc_c){
@@ -1012,7 +1054,7 @@ class Gerenciador{
                                 break;
                             }
                             
-                            int quanti_itens, ind_c, unid_compradas, ind_data = -1;
+                            int quanti_itens, ind_c = -1, unid_compradas, ind_data = -1;
                             mercadoria merc_comprada;
                             tdata data_dprod;
                             string data_t;
@@ -1160,7 +1202,7 @@ class Gerenciador{
                                         if(pagamento < 0){
                                             for(size_t L=0; L<amigo[ind].getMerc().size(); L++){
                                                 size_t posicao = amigo[ind].getMerc()[L].getNome().find("Resto");
-                                                if(!(posicao == string::npos)){
+                                                if(posicao != string::npos){
                                                     n = L;
                                                     amigo[ind].getMerc()[L].setValor(amigo[ind].getMerc()[L].getValor() - pagamento);
                                                 }
@@ -1358,6 +1400,7 @@ class Gerenciador{
                             break;
                         }
                         ind_comp = 0;
+                        string data_str;
                         do{
                             if(ind_comp == -1){
                                 if(verific(resposta)){
@@ -1366,7 +1409,12 @@ class Gerenciador{
                                 }
                             }
                             system("cls"); ind_comp = -1;
-                            cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
+                            do{
+                                cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; getline(cin, data_str); lerData(data_str, nova_valid);
+                                if(!dataValida(nova_valid)){
+                                    cerr << "Erro na digitação, tente novamente." << endl;
+                                }   
+                            }while(!dataValida(nova_valid));
                             for(size_t j = 0; j<merc_c[ind].getValid().size(); j++){
                                 if(merc_c[ind].getValid()[j].day + merc_c[ind].getValid()[j].mon + merc_c[ind].getValid()[j].year == nova_valid.day + nova_valid.mon + nova_valid.year){
                                     ind_comp = j;

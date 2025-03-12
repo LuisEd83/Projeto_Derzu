@@ -190,7 +190,7 @@ class proletariado : public pessoa{
 };
 
 class cliente : public pessoa{
-    protected:
+    private:
         vector<mercadoria> itens;
     public:
             cliente() : pessoa(2){

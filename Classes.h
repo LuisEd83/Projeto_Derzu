@@ -30,11 +30,10 @@ class mercadoria{
         vector<tdata> validade;
         
     public:
+
         void setN_prod(string name){nome_produto = name;}
         void setQuant(vector<int> quant){
-            for(size_t i = 0; i <quant.size(); i++){
-                quantidade[i] = quant[i];
-            }
+            quantidade = quant; 
         }
         void setUnid(int uni){unidade_pacote = uni;}
         void setValor(float v){valor = v;}
@@ -44,18 +43,16 @@ class mercadoria{
             }
         }
 
-        string getNome(){return nome_produto;}
-        vector<int> getQuant(){return quantidade;}
+        string getNome() const {return nome_produto;}
+        vector<int>& getQuant(){return quantidade;}
         int getUnid(){return unidade_pacote;}
         float getValor(){return valor;}
-        vector<tdata> getValid(){return validade;}
+        vector<tdata>& getValid(){return validade;}
 
             mercadoria(){
                 nome_produto = "void";
-                quantidade.push_back(0);
                 valor = 0.0;
                 unidade_pacote = 0;
-                validade.push_back({0,0,0});
             }
             mercadoria(string nome_produto, vector<int> quantidade, int unidade_pacote, float valor, vector<tdata> validade) 
                 : nome_produto(nome_produto), quantidade(quantidade), unidade_pacote(unidade_pacote), valor(valor), validade(validade) {}
@@ -113,15 +110,6 @@ class pessoa{
         void setConf(string conf){confianca = conf;}
         void setTipo(int t){tipo = t;}
 
-        virtual vector<string> dadosPtabela(){
-            int x = 2;
-            if(x > 1){
-                return {"padrão", "não padrão"};
-            }else{
-                return {"sim"};
-            }
-        }
-
         template <class T>
         bool F_ind(vector<T>& Nome_class, string Nome_p){
             for(size_t i = 0; i<Nome_class.size(); i++){
@@ -154,8 +142,6 @@ class proletariado : public pessoa{
             setPagamento(pag);
         }
 
-        string getNome(){return nome;}
-        string getConf(){return confianca;}
         void setCargo(string C){cargo = C;}
         void setSalario(float valor){salario = valor;}
         void setPagamento(tdata data){dia_pagamento = {data.day, data.mon, data.year};}
@@ -191,7 +177,7 @@ class proletariado : public pessoa{
             return false;
         }
 
-        vector<string> dadosPtabela(){
+        vector<string> dadosPtabela() const {
             return {
                 getNome(),
                 getConf(),
@@ -214,20 +200,18 @@ class cliente : public pessoa{
             cliente(string nome, string conf, vector<mercadoria> merc)
             :  pessoa(nome, conf, 2), itens(merc) {} 
 
-            string getNome(){return nome;}
-            string getConf(){return confianca;}
             void setTipo(){tipo = 2;}
-            void setMerc(vector<mercadoria> merc){
+            void setMerc(vector<mercadoria>& merc){
                 for(mercadoria m : merc){
                     itens.push_back(m);
                 }
             }
 
-            vector<mercadoria> getMerc() const {return itens;}
+            vector<mercadoria>& getMerc(){return itens;}
             int getTipo(){return 2;}
 
-            vector<string> dadosPtabela(){
-                string itensStr;
+            vector<string> dadosPtabela() const {
+                string itensStr = " ";
                 for(size_t i = 0; i<itens.size(); i++){
                     itensStr += itens[i].getNome() + ", ";
                 }

@@ -20,7 +20,7 @@ int escolha(vector<T> Nome_vector, string Nome_p){
         if(p != string::npos){
             n++;
             indices.push_back(i);
-            cout << n << Nome_vector[i].getNome() << endl;
+            cout << n << " - " << Nome_vector[i].getNome() << endl;
         }
     }
 
@@ -306,37 +306,71 @@ void verfic_venc(vector<mercadoria>& itens_p_verific){
     }
 }
 
-bool extracao_arq_prod(vector<mercadoria>& itens_p_arm, const string& nome_arq){
-    string nome_p_prod;
-    vector<int> num_quant;
-    int quant_pacot;
-    float preco;
-    vector<tdata> dat_ven;
-    int tam, num_quantidade;
-
+bool extracao_arq_prod(vector<mercadoria>& itens_p_arm, const string& nome_arq) {
     fstream arq_merc(nome_arq, fstream::in);
-    if(!arq_merc.is_open()){
+    if (!arq_merc.is_open()) {
         cerr << "Erro ao abrir o arquivo." << endl;
         return false;
     }
-    while(arq_merc >> nome_p_prod >> num_quantidade >> quant_pacot >> preco >> tam){
-        dat_ven.clear();
 
-        for(int i = 0; i < num_quantidade; i++){
-            int quantidade_itens;
-            arq_merc >> quantidade_itens;
-            num_quant.push_back(quantidade_itens);
+    string line;
+    while (getline(arq_merc, line)) {
+        string nome_p_prod = line;
+        vector<int> num_quant;
+        int quant_pacot = 0;
+        float preco = 0.0;
+        vector<tdata> dat_ven;
+
+        if (!getline(arq_merc, line)) break;
+        istringstream quant_stream(line);
+        int q;
+        while (quant_stream >> q) {
+            num_quant.push_back(q);
         }
 
-        for(int i = 0; i<tam; i++){
-            tdata data;
-            arq_merc >> data.day >> data.mon >> data.year;
-            dat_ven.push_back(data);
+        if (!getline(arq_merc, line)) break;
+        try {
+            quant_pacot = stoi(line);
+        } catch (const invalid_argument& e) {
+            cerr << "Erro ao converter unidade por pacote: " << line << endl;
+            continue;
         }
+
+        if (!getline(arq_merc, line)) break;
+        try {
+            preco = stof(line);
+        } catch (const invalid_argument& e) {
+            cerr << "Erro ao converter preço: " << line << endl;
+            continue;
+        }
+
+        if (!getline(arq_merc, line)) break;
+        istringstream data_stream(line);
+        string data_str;
+        while (data_stream >> data_str) {
+            tdata data = {0, 0, 0};
+            size_t pos1 = data_str.find('/');
+            size_t pos2 = data_str.rfind('/');
+            if (pos1 == string::npos || pos2 == string::npos || pos1 == pos2) {
+                cerr << "Erro no formato da data: " << data_str << endl;
+                continue;
+            }
+            try {
+                data.day = stoi(data_str.substr(0, pos1));
+                data.mon = stoi(data_str.substr(pos1 + 1, pos2 - pos1 - 1));
+                data.year = stoi(data_str.substr(pos2 + 1));
+                dat_ven.push_back(data);
+            } catch (const invalid_argument& e) {
+                cerr << "Erro ao converter data: " << data_str << endl;
+                continue;
+            }
+        }
+
         itens_p_arm.emplace_back(nome_p_prod, num_quant, quant_pacot, preco, dat_ven);
     }
+
     arq_merc.close();
-    cout << "A extração de dados foi realizada com sucesso" << endl;
+    cout << "Extração realizada com sucesso!" << endl;
     return true;
 }
 
@@ -418,8 +452,8 @@ void extracao_vector(vector<shared_ptr<pessoa>>& people, vector<shared_ptr<prole
         if(auto c = dynamic_pointer_cast<cliente>(pessoa)){
             clientes.push_back(c);
         }else{
-            if(auto w = dynamic_pointer_cast<proletariado>(pessoa)){
-                workers.push_back(w);
+            if(auto worker  = dynamic_pointer_cast<proletariado>(pessoa)){
+                workers.push_back(worker);
             }
         }
     }
@@ -495,6 +529,19 @@ bool proc_carg(vector<proletariado> workers, string carg){
     return false;
 }
 
+bool lerData(string data_str, tdata& data) {
+    std::stringstream ss(data_str);
+    char slash;
+
+    if (ss >> data.day >> slash >> data.mon >> slash >> data.year) {
+        if (slash == '/') {
+            return true;
+        }
+    }
+    std::cerr << "Formato de data inválido! Use o formato dia/mes/ano.\n";
+    return false;
+}
+
 bool dataValida(tdata data){
     int diaspmes[]={0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
@@ -532,27 +579,29 @@ bool compra(vector<mercadoria>& mercadoria_CO, vector<mercadoria>& mercadoria_VE
     int ind = -1, ind_d = -1; 
     mercadoria item_VE = mercadoria();
 
-    for(size_t i = 0; i<mercadoria_CO.size(); i++){
-        string busca = nome_dproduto;
-        size_t posicao = mercadoria_CO[i].getNome().find(busca);
-        if(!(posicao == string::npos)){
-            ind = i;
-            item_VE.setN_prod(mercadoria_CO[i].getNome());
-            item_VE.setValor(mercadoria_CO[i].getValor() * 1.2);
-            item_VE.setUnid(mercadoria_CO[i].getUnid());
-        }
-        for(size_t j = 0; j<mercadoria_CO[i].getValid().size(); j++){
-            if(mercadoria_CO[i].getValid()[j].day + mercadoria_CO[i].getValid()[j].mon + mercadoria_CO[i].getValid()[j].year == data_dprod.day + data_dprod.mon + data_dprod.year){
+    ind = escolha(mercadoria_CO, nome_dproduto);
+    if(ind == -1){
+        cout << "A mercadoria não foi registrada ou foi escrita incorretamente." << endl;
+        cout << "Redirecionando ao Menu...";
+        return false;
+    }else{
+        item_VE.setN_prod(mercadoria_CO[ind].getNome());
+        item_VE.setValor(mercadoria_CO[ind].getValor() * 1.2);
+        item_VE.setUnid(mercadoria_CO[ind].getUnid());
+
+        for(size_t j = 0; j<mercadoria_CO[ind].getValid().size(); j++){
+            if(mercadoria_CO[ind].getValid()[j].day == data_dprod.day && mercadoria_CO[ind].getValid()[j].mon == data_dprod.mon && mercadoria_CO[ind].getValid()[j].year == data_dprod.year){
                 ind_d = j;
-                item_VE.getValid().push_back(mercadoria_CO[i].getValid()[j]);
+                item_VE.getValid().push_back(mercadoria_CO[ind].getValid()[j]);
             }
         }
     }
-    if(ind == -1 || ind_d == -1){
+    if(ind_d == -1){
         cout << "A mercadoria não foi registrada ou foi escrita incorretamente." << endl;
         cout << "Redirecionando ao Menu...";
         return false;
     }
+
     if(((mercadoria_CO[ind].getValid()[ind_d].day <=0) && (mercadoria_CO[ind].getValid()[ind_d].mon <=0) && (mercadoria_CO[ind].getValid()[ind_d].year <=0)) || (mercadoria_CO[ind].getValid()[ind_d].year < 0)){
         cout << "A mercadoria que está prestes a ser vendida está vencida!" << endl;
         cout << "Verifique o produto imediatamente!";
@@ -575,19 +624,33 @@ bool compra(vector<mercadoria>& mercadoria_CO, vector<mercadoria>& mercadoria_VE
                 return true;
             }
         }
+
         if(quant - unidades_compradas == 0){
             mercadoria_CO[ind].getQuant()[ind_d] -= unidades_compradas;
+
+            item_VE.setN_prod(mercadoria_CO[ind].getNome());
             item_VE.getQuant().push_back(unidades_compradas);
+            item_VE.setUnid(mercadoria_CO[ind].getUnid());
+            item_VE.setValor(mercadoria_CO[ind].getValor());
+            item_VE.getValid().push_back(data_dprod);
+            mercadoria_VE.push_back(item_VE);
+
             cout << "O produto: " << mercadoria_CO[ind].getNome() << " com a validade " << mercadoria_CO[ind].getValid()[ind_d].day << "/" << mercadoria_CO[ind].getValid()[ind_d].mon << "/" << mercadoria_CO[ind].getValid()[ind_d].year << "está em falta.";
-            return true;
         }else{
             mercadoria_CO[ind].getQuant()[ind_d] -= unidades_compradas;
+
+            item_VE.setN_prod(mercadoria_CO[ind].getNome());
             item_VE.getQuant().push_back(unidades_compradas);
+            item_VE.setUnid(mercadoria_CO[ind].getUnid());
+            item_VE.setValor(mercadoria_CO[ind].getValor());
+            item_VE.getValid().push_back(data_dprod);
+            mercadoria_VE.push_back(item_VE);
+
             cout << " com a validade " << mercadoria_CO[ind].getValid()[ind_d].day << "/" << mercadoria_CO[ind].getValid()[ind_d].mon << "/" << mercadoria_CO[ind].getValid()[ind_d].year;
             cout << " ficou com " << mercadoria_CO[ind].getQuant()[ind_d] << " unidades" << endl;
-            return true;
         }
     }
+    return true;
 }
 
 bool verific(string resposta){
@@ -605,9 +668,6 @@ bool resp_saida(string resposta){
     resposta.clear();
     cout << "Digite qualquer coisa quando for para sair: ";
     cin >> resposta;
-    if(resposta != "não"){
-        return true;
-    }else{
-        return true;
-    }
+    if(resposta != "não"){cout << " ";}
+    return true;
 }

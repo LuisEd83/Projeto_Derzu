@@ -13,7 +13,7 @@ class Gerenciador{
         bool registra_cli(vector<mercadoria>& merc_c, vector<mercadoria>& merc_v, vector<cliente>& amigo, int* cli_cadast, int* num_prod_v){
             cout << "Aqui é a área de registro de cliente. \n" << endl;
             int tam, unidades_vend, ind = -1;
-            string nome_dproduto, resposta, nome_temp;
+            string nome_dproduto, resposta, nome_temp, data_t;
             string confia;
             tdata data_dprod;
 
@@ -29,10 +29,10 @@ class Gerenciador{
             }
             system("cls");
             cout << "Aqui é a área de registro de cliente. \n" << endl;
-            cout << "O cliente possui as seguintes caracterísicas: ";
+            cout << "O cliente possui as seguintes caracterísicas: " << endl;
             cout << " - Nome; \n - Número de produtos comprados; \n - Produtos comprados; \n - Data de vencimento do produto \n" << endl;
             cout << "Digite o nome: "; cin.ignore(); getline(cin, nome_temp); cout << endl; transf(nome_temp); comprador_atual.setNome(nome_temp);
-            ind = escolha(amigo, comprador_atual.getNome());
+            ind = escolha(amigo, comprador_atual.getNome()); cin.ignore();
             if(ind != -1){
                 cout << "Este nome já é cadastrado no nosso sistema." << endl;
                 cout << "Deseja, realmente, cadastrar este nome? (sim/não)" << endl; resposta.clear(); getline(cin, resposta); transf(resposta);
@@ -43,35 +43,37 @@ class Gerenciador{
                     return false;
                 }
             }
-            
-            cout << "Digite a confiabilidade deste cliente: "; getline(cin, confia); comprador_atual.setConf(confia); cout << endl;
+            cout << "Digite a confiabilidade deste cliente (pouco confiável/ confiável/ muito confiável): "; getline(cin, confia); comprador_atual.setConf(confia); cout << endl;
             cout << "Digite quantos produtos o cliente pegou: "; cin >> tam; cout << endl;
             cout << "Digite o nome, a quantidade de unidades vendidas e a data de vencimento (no formato dia/mes/ano) deste produto." << endl;
-            ind = -1;
             for(int i = 0; i<tam; i++){
-                unidades_vend = 0; ind = 0;
+                unidades_vend = 0; ind = -1;
 
-                cin.ignore(); getline(cin, nome_dproduto); transf(nome_dproduto);
-                cin >> unidades_vend;
+                cout << " - Nome: "; cin.ignore(); getline(cin, nome_dproduto); transf(nome_dproduto);
                 ind = escolha(merc_c, nome_dproduto);
+                cout << " - Unidades vendidas: "; cin >> unidades_vend; cin.ignore();
                 if(ind == -1){
                     cout << "Mercadoria não encontrada. Por favor, verifique se a mercadoria existe ou se você escreveu incorretamente.\n";
                     return false;
                 }
 
-                cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year;
+                cout << " - Data de vencimento: "; getline(cin, data_t); lerData(data_t, data_dprod);
+                if(!dataValida(data_dprod)){
+                    cerr << "Data inválida." << endl;
+                    return false;
+                }
                 compra(merc_c, merc_v, nome_dproduto, unidades_vend, data_dprod);
-                num_prod_v += 1;
-                ind = merc_v[ind].F_show(merc_v, nome_dproduto);
+                (*num_prod_v) += unidades_vend;
                 comprador_atual.getMerc().push_back(merc_v[ind]);
             }
             amigo.push_back(comprador_atual);
-            cout << "Cliente cadastrado com sucesso!";
-            cli_cadast ++;
+            cout << "Cliente cadastrado com sucesso!" << endl;
+            (*cli_cadast)++;
             return true;
         }
 
-        bool registra_prod(vector<mercadoria>& merc_c, int* prod_cadast){
+        bool registra_prod(vector<mercadoria>&merc_c, int* prod_cadast){
+            string data_t;
             tdata data_dprod;
             mercadoria merc_comprada = mercadoria();
             int quant, unid;
@@ -90,11 +92,13 @@ class Gerenciador{
                 cout << "A Mercadoria possui as seguintes características: " << endl;
                 cout << " - Nome;\n" << " - Quantidade de itens;\n" << " - Quantidade por pacote;\n" << " - Valor (em reais);\n" << " - Validade.\n";
                 cout << "Agora, registre a mercadoria:\n";
-                cout << "Nome da mercadoria: "; cin.ignore(); cin >> nome_t; cout << endl; transf(nome_t); merc_comprada.setN_prod(nome_t);
-                cout << "Quantidade de mercadoria: "; cin >> quant; merc_comprada.getQuant().push_back(quant); cout << endl;
-                cout << "Quantidade de unidades por fardo: "; cin >> unid; merc_comprada.setUnid(unid); cout << endl;
+                cout << "Nome da mercadoria: "; cin.ignore(); getline(cin, nome_t); transf(nome_t); merc_comprada.setN_prod(nome_t);
+                cout << "Quantidade de mercadoria: "; cin >> quant; merc_comprada.getQuant().push_back(quant);
+                cout << "Quantidade de unidades por fardo: "; cin >> unid; merc_comprada.setUnid(unid);
                 cout << "Valor da mercadoria (em reais): "; cin >> v; merc_comprada.setValor(v);
-                cout << "Data de validade (no formato dia/mês/ano): "; cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year;
+                cout << "Data de validade (no formato dia/mês/ano): "; cin.ignore(); getline(cin, data_t);
+                lerData(data_t, data_dprod);
+                cout << endl;
                 if(dataValida(data_dprod)){
                     merc_comprada.getValid().push_back(data_dprod); cout << endl;
                 }else{
@@ -106,7 +110,7 @@ class Gerenciador{
                 for(size_t i = 0; i<merc_c.size(); i++){
                     if(merc_c[i].getNome() == nome_t){
                         cout << "Uma mercadoria já está registrada no nosso sistema.\n Caso for para adicionar unidades, sugerimos que vá para a área 'Alterar produto'.\n";
-                        cout << "Deseja, mesmo assim, adicionar este produto (sim / não)?"; getline(cin, resposta); transf(resposta);
+                        cout << "Deseja, mesmo assim, adicionar este produto (sim / não)?" << endl; getline(cin, resposta); transf(resposta);
                         if(resposta != "sim"){
                             cout << "Por encontrar um produto já cadastrado, iremos te redirecionar para o menu." <<endl;
                             cout << "Redirecionando ao menu...";
@@ -115,14 +119,14 @@ class Gerenciador{
                     }
                 }
                 merc_c.push_back(merc_comprada);
-                cout << "Registro completo!";
-                prod_cadast ++;
+                cout << "Registro completo!" << endl;
+                (*prod_cadast)++;
                 return true;
         }
 
         bool registra_fun(vector<proletariado>& trabalhador, int* fun_cadast){
-            string resposta,nome_dworker;
-            string conf, carg;
+            string resposta = " ",nome_dworker;
+            string conf, carg, data_t;
             tdata data_p;
             float v;
 
@@ -131,25 +135,25 @@ class Gerenciador{
                 system("cls");
                 return false;
             }
-
+            system("cls");
             cout << "Aqui é a área para registrar um funcionário. \n";
             cout << "Digite o nome do funcionário: "; cin.ignore(); getline(cin, nome_dworker); transf(nome_dworker);
             cout << "Digite a confiança deste funcionário (pouco confiável/ confiável/ muito confiável): "; getline(cin, conf); transf(conf);
-            if(conf != "pouco confiável" || conf != "confiável" || conf != "muito confiável"){
-                cerr << "Ops! A confiabilidade não foi bem definida." << endl;
-                return false;
-            }
-            cout << "Digite o cargo deste funcionário: "; cin.ignore(); getline(cin, carg); transf(carg);
-            if(proc_carg(trabalhador, "chefe")){
-                cerr << "Já existe alguém com este cargo." << endl;
-                return false;
-            }
-            cout << "Digite o salário do novo funcionário: "; cin >> v;
-            cout << "Digite a data de pagamento do novo funcionário (d/m/a): "; cin >> data_p.day >> data_p.mon >> data_p.year;
+            do{
+                cout << "Digite o cargo deste funcionário: "; getline(cin, carg); transf(carg);
+                if (proc_carg(trabalhador, carg)) {
+                    cerr << "Já existe alguém com este cargo. Tente outro cargo." << endl;
+                } else {
+                    break;
+                }
+            } while (true);
+            cout << "Digite o salário do novo funcionário: "; cin >> v; cin.ignore();
+            cout << "Digite a data de pagamento do novo funcionário (d/m/a): "; getline(cin, data_t);
+            lerData(data_t, data_p);
             if(dataValida(data_p)){
                 trabalhador.emplace_back(nome_dworker, conf, carg, v, data_p);
                 cout << "Funcionário registrado!" << endl;
-                fun_cadast++;
+                (*fun_cadast)++;
                 return true;
             }else{
                 cout << "Data inválida!" << endl;
@@ -190,8 +194,8 @@ class Gerenciador{
                 cin >> resposta; transf(resposta);
                 if(resposta == "sim"){
                     amigo.erase(amigo.begin() + ind);
-                    cout << "Cliente " << amigo[ind].getNome() << " deletado!" << endl;
-                    cli_ex += 1;
+                    cout << "Cliente deletado!" << endl;
+                    (*cli_ex)++;
                     return true;
                 }
             }
@@ -231,8 +235,8 @@ class Gerenciador{
                 cin >> resposta; transf(resposta);
                 if(resposta == "sim"){
                     merc_c.erase(merc_c.begin()+ind);
-                    cout << "Produto " << merc_c[ind].getNome() << "deletado!\n";
-                    prod_ex += 1;
+                    cout << "Produto deletado!\n";
+                    (*prod_ex)++;
                     return true;
                 }
             }
@@ -257,7 +261,7 @@ class Gerenciador{
                 }
                 cout << "Aqui é a área de demissão de funcionário.\n";
                 cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
-                ind = escolha(worker, nome_dworker);
+                ind = escolha(worker, nome_dworker); cin.ignore();
 
                 if(ind == -1){
                     cout << "Não foi possível encontrar o seu nome." << endl;
@@ -317,132 +321,148 @@ class Gerenciador{
             }
         }
 
-        bool lista_pessoas(vector<cliente> clientes, vector<proletariado> Work){
+        bool lista_pessoas(const vector<cliente>& clientes, const vector<proletariado>& funcionarios) {
             string resposta;
-
+        
             cout << "Aqui é a área da lista de pessoas." << endl;
-            if(verific(resposta)){
-                system("cls");
+            cout << "Digite qual lista você gostaria de ver (cliente/funcionário): ";
+            getline(cin, resposta);
+            transf(resposta);
+        
+            
+            if (resposta != "cliente" && resposta != "funcionario") {
+                cout << "Ops! Ocorreu um erro de digitação." << endl;
+                cout << "Por favor, digite 'cliente' ou 'funcionario'." << endl;
                 return false;
             }
-
-            system("cls");
-            resposta.clear();
-
-            cout << "Aqui é a área da lista de pessoas." << endl;
-            cout << "Digite qual lista você gostaria de ver (cliente/funcionário): "; getline(cin, resposta); transf(resposta);
+        
             
-            if(resposta == "cliente"){
-                if(clientes.empty()){
+            if (resposta == "cliente") {
+                if (clientes.empty()) {
                     cerr << "Não foi registrado nenhum cliente!" << endl;
                     return false;
                 }
+        
                 const int larguraNome = 15;
                 const int larguraConf = 15;
-                const int larguraItens = 15;
-
+                const int larguraItens = 50;  
+        
                 cout << left << setw(larguraNome) << "Nome"
-                    << setw(larguraConf) << "Confiança"
-                    << setw(larguraItens * 3) << "Itens" << endl;
-                    cout << string(75, '-') << endl;
-                
-                for(size_t i = 0; i<clientes.size(); i++){
-                    vector<string> d = clientes[i].dadosPtabela();
-                    cout << left << setw(larguraNome) << d[0]
-                    << setw(larguraConf) << d[1]
-                    << setw(larguraItens * 3) << d[2] << endl;
-                }
-                return true;
-            }else{
-                if(resposta == "funcionário"){
-                    if(Work.empty()){
-                        cerr << "Não foi registrado nenhum funcionário!" << endl;
-                        return false;
-                    }
-                    const int larguraNome = 15;
-                    const int larguraConf = 15;
-                    const int larguraCarg = 20;
-                    const int larguraSal = 10;
-                    const int larguraDat = 15;
-
-                    cout << left << setw(larguraNome) << "Nome"
-                        << setw(larguraConf) << "Confiança"
-                        << setw(larguraCarg) << "Cargo"
-                        << setw(larguraSal) << "Salário (reais)"
-                        << setw(larguraDat) << "Pagamento" << endl;
-                        cout << string(75, '-') << endl;
-                        for(size_t i = 0; i<Work.size(); i++){
-                            vector<string> d = Work[i].dadosPtabela();
-                            cout << left << setw(larguraNome) << d[0]
-                                << setw(larguraConf) << d[1]
-                                << setw(larguraCarg) << d[2]
-                                << setw(larguraSal) << d[3]
-                                << setw(larguraDat) << d[4] << endl;
-                    }
-                    return true;
-                }else{
-                    cout << "Ops! Ocorreu um erro de digitação." << endl;
-                    cout << "Não foi possível mostrar os dados." << endl;
-                    return false;
+                     << setw(larguraConf) << "Confiança"
+                     << setw(larguraItens) << "Itens" << endl;
+                cout << string(80, '-') << endl;
+        
+                for (const auto& cliente : clientes) {
+                    vector<string> dados = cliente.dadosPtabela();
+                    cout << left << setw(larguraNome) << dados[0]
+                         << setw(larguraConf) << dados[1]
+                         << setw(larguraItens) << dados[2] << endl;
                 }
             }
+            
+            else if (resposta == "funcionario") {
+                if (funcionarios.empty()) {
+                    cerr << "Não foi registrado nenhum funcionário!" << endl;
+                    return false;
+                }
+        
+                const int larguraNome = 15;
+                const int larguraConf = 15;
+                const int larguraCarg = 20;
+                const int larguraSal = 15;
+                const int larguraDat = 15;
+        
+                cout << left << setw(larguraNome) << "Nome"
+                     << setw(larguraConf) << "Confiança"
+                     << setw(larguraCarg) << "Cargo"
+                     << setw(larguraSal) << "Salário (reais)"
+                     << setw(larguraDat) << "Pagamento" << endl;
+                cout << string(80, '-') << endl;
+        
+                for (const auto& func : funcionarios) {
+                    vector<string> dados = func.dadosPtabela();
+                    cout << left << setw(larguraNome) << dados[0]
+                         << setw(larguraConf) << dados[1]
+                         << setw(larguraCarg) << dados[2]
+                         << setw(larguraSal) << dados[3]
+                         << setw(larguraDat) << dados[4] << endl;
+                }
+            }
+        
+            return true;
         }
 
-        void lista_venc(vector<mercadoria> merc_c){
+        void lista_venc(vector<mercadoria>& merc_c) { 
             string resposta, nome_dproduto;
             vector<double> diff_data;
             int ind = -1;
-
+        
             cout << "Aqui é a área de validades.\n";
-            if(verific(resposta)){
+            if (verific(resposta)) {
                 system("cls");
                 return;
             }
-            if(merc_c.empty()){
-                cout << "Não há produtos registrados!" <<endl;
-                if(resp_saida(resposta)){
-                cout << "Retornando ao menu...";
+            if (merc_c.empty()) {
+                cout << "Não há produtos registrados!" << endl;
+                if (resp_saida(resposta)) {
+                    cout << "Retornando ao menu...";
                 }
                 return;
             }
-
-            system("cls"); resposta.clear();
+        
+            system("cls");
+            resposta.clear();
             cout << "Aqui é a área de validades.\n";
             cout << "Deseja saber a validade de um único produto? (sim/não)\n";
-            cin >> resposta; transf(resposta);
-            if(resposta == "sim"){
-                cout << "Digite o nome do produto que deseja ver a validade: "; getline(cin, nome_dproduto); transf(resposta);
+            cin >> resposta;
+            transf(resposta);
+        
+            if (resposta == "sim") {
+                cout << "Digite o nome do produto que deseja ver a validade: ";
+                cin.ignore();
+                getline(cin, nome_dproduto);
+                transf(nome_dproduto);
+        
                 ind = escolha(merc_c, nome_dproduto);
-                if(ind < 0){
+                if (ind < 0) {
                     cout << "Produto não encontrado.\n";
                     return;
                 }
+        
                 comparador_data(merc_c[ind].getValid(), diff_data);
-                for(size_t i = 0; i<diff_data.size(); i++){
-                    if(diff_data[i] <= 0){
-                        cout << "O produto " << merc_c[ind].getNome() << "apresenta " << merc_c[ind].getQuant()[i] << "unidades venciadas.\n";
-                    }else{
-                        cout << merc_c[ind].getNome() << "(" << merc_c[ind].getValid()[i].day << "/" << merc_c[ind].getValid()[i].mon << "/" << merc_c[ind].getValid()[i].year << ")";
-                        cout << "||";
-                        cout << "Há " << merc_c[ind].getQuant()[i] << "unidades que irá(ão) em" << diff_data[i] << "dias\n";
+        
+                for (size_t i = 0; i < diff_data.size(); i++) {
+                    if (diff_data[i] <= 0) {
+                        cout << "O produto " << merc_c[ind].getNome() << " apresenta " << merc_c[ind].getQuant()[i] << " unidades vencidas.\n";
+                    } else {
+                        cout << merc_c[ind].getNome() << " (" 
+                             << merc_c[ind].getValid()[i].day << "/" 
+                             << merc_c[ind].getValid()[i].mon << "/" 
+                             << merc_c[ind].getValid()[i].year << ") || ";
+                        cout << "Há " << merc_c[ind].getQuant()[i] << " unidades que irá(ão) vencer em " << diff_data[i] << " dias\n";
                     }
                 }
-            }else{
-                cout << "Aqui estão as validades e o tempo (em dias) até o vencimento:\n";                
-                for(size_t i = 0; i<merc_c.size(); i++){
+            } else {
+                cout << "Aqui estão as validades e o tempo (em dias) até o vencimento:\n";
+                for (size_t i = 0; i < merc_c.size(); i++) {
+                    diff_data.clear(); // Resetar para cada produto
                     comparador_data(merc_c[i].getValid(), diff_data);
-                    for(size_t j = 0; i<diff_data.size(); i++){
-                        if(diff_data[j] <= 0){
-                            cout << "O produto " << merc_c[i].getNome() << "apresenta " << merc_c[i].getQuant()[j] << "unidades venciadas.\n";
-                        }else{
-                            cout << merc_c[i].getNome() << " (" << merc_c[i].getValid()[j].day << "/" << merc_c[i].getValid()[j].mon << "/" << merc_c[i].getValid()[j].year << ")";
-                            cout << " || ";
-                            cout << "Há " << merc_c[i].getQuant()[j] << "unidades que irá(ão) em" << diff_data[i] << "dias\n";
+                    
+                    for (size_t j = 0; j < diff_data.size(); j++) {
+                        if (diff_data[j] <= 0) {
+                            cout << "O produto " << merc_c[i].getNome() << " apresenta " << merc_c[i].getQuant()[j] << " unidades vencidas.\n";
+                        } else {
+                            cout << merc_c[i].getNome() << " (" 
+                                 << merc_c[i].getValid()[j].day << "/" 
+                                 << merc_c[i].getValid()[j].mon << "/" 
+                                 << merc_c[i].getValid()[j].year << ") || ";
+                            cout << "Há " << merc_c[i].getQuant()[j] << " unidades que irá(ão) vencer em " << diff_data[j] << " dias\n";
                         }
                     }
                 }
             }
         }
+        
 
         void temp_pg_fun(vector<proletariado> worker){
             double diff_t;
@@ -527,7 +547,7 @@ class Gerenciador{
             system("cls");
 
             cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
-            ind = escolha(W, nome_dworker);
+            ind = escolha(W, nome_dworker); cin.ignore();
             cout << "Digite a senha: "; getline(cin, senha_t);
             if(chave_geral.verific_S(senha_t, W[ind]) == false){
                 cout << "Senha e/ou nome inválidos" << endl;
@@ -619,7 +639,7 @@ class Gerenciador{
             }
 
             cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
-            ind = escolha(workers, nome_dworker);
+            ind = escolha(workers, nome_dworker); cin.ignore();
             if(ind == -1){
                 cout << "Nome não encontrado.";
                 return;
@@ -691,7 +711,7 @@ class Gerenciador{
         }
 
         void realiza_compra(vector<mercadoria> merc_c, vector<mercadoria> merc_v, int* num_prod_v){
-            string resposta, nome_dproduto;
+            string resposta, nome_dproduto, data_t;
             int quant_itens, unid_comp, ind = -1; nome_dproduto.clear();
             float valor_conta = 0.0, pagamento_cl, troco;
             tdata data_dprod;
@@ -714,18 +734,24 @@ class Gerenciador{
                     cout << "Digite o nome do produto e a quantidade comprada deste produto: ";
                     cin.ignore(); getline(cin,nome_dproduto); transf(nome_dproduto);
                     ind = escolha(merc_c, nome_dproduto);
-                    cin >> unid_comp;
+                    cin >> unid_comp; cin.ignore();
                     if(ind < 0){
                         cout << "Produto não encontrado!" << endl;
                         cout << "Tente novamente.";
-                        system("cls");
+                        sleep(2); system("cls");
                     }
                 }while(ind < 0);
-                cout << "Digite a data de validade deste produto (d/m/a): ";
-                cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year;
+                
+                do{
+                    cout << "Digite a data de validade deste produto (d/m/a): ";
+                    getline(cin, data_t); lerData(data_t, data_dprod);
+                    if(!dataValida(data_dprod)){
+                        cerr << "Data inválida, tente novamente." << endl;
+                    }
+                }while(!dataValida(data_dprod));
                 compra(merc_c, merc_v, nome_dproduto, unid_comp, data_dprod);
                 valor_conta += merc_c[ind].getValor() * unid_comp;
-                num_prod_v += 1;
+                (*num_prod_v)+= unid_comp;
             }
 
             cout << "Valor da conta: R$" << valor_conta << endl;
@@ -752,7 +778,7 @@ class Gerenciador{
         }
 
         void separador_prod(vector<mercadoria> merc_c){
-            string resposta, nome_dproduto;
+            string resposta, nome_dproduto, data_t;
             tdata data_dprod;
             int quant_sep, ind = -1;
 
@@ -772,8 +798,14 @@ class Gerenciador{
                     cout << "Produto não encontrado." << endl;
                     return;
                 }
-                cout << "\nDigite quantas vezes essa separação ocorrerá: "; cin >> quant_sep;
-                cout << "\nDigite a data de validade do produto a ser desagrupado (d/m/a): "; cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year;
+                cout << "\nDigite quantas vezes essa separação ocorrerá: "; cin >> quant_sep; cin.ignore();
+                do{
+                    data_t.clear();
+                    cout << "\nDigite a data de validade do produto a ser desagrupado (d/m/a): "; getline(cin, data_t);
+                    if(!lerData(data_t, data_dprod)){
+                        cerr << "Data inválida, tente novamente." << endl;
+                    }
+                }while(!dataValida(data_dprod));
                 if(desagrupador(merc_c, ind, quant_sep, data_dprod) == false){
                     cerr << "Não foi possível realizar a separação do produto." << endl;
                     return;
@@ -834,9 +866,9 @@ class Gerenciador{
             }
             system("cls"); resposta.clear();
 
-            cout << "Aqui é a área de busca.\n";
-            cout << "O que você está produrando no sistema? (cliente, produto, funcionário)" << endl; getline(cin,resposta); transf(resposta);
-            if(resposta != "cliente" || resposta != "produto" || resposta != "funcionário"){
+            cout << "Aqui é a área de busca.\n"; cin.ignore();
+            cout << "O que você está produrando no sistema? (cliente, produto, funcionario)" << endl; getline(cin,resposta); transf(resposta);
+            if(resposta != "cliente" && resposta != "produto" && resposta != "funcionario"){
                 cerr << "Resposta inválida" << endl;
                 return;
             }
@@ -884,7 +916,7 @@ class Gerenciador{
                 cout << " - Unidade por pacote: " << merc_c[ind].getUnid() << endl;
                 cout << " - Valor (em reais): " << merc_c[ind].getValor() << endl; 
             }
-            if(resposta == "funcionário"){
+            if(resposta == "funcionario"){
                 if(workers.empty()){
                     cerr << "Não há funcionários cadastrados." << endl;
                     return;
@@ -925,7 +957,7 @@ class Gerenciador{
             system("cls"); nome_dcliente.clear();
             cout << "Aqui é a área para alterar o cliente.\n";
             cout << "Digite o nome do cliente que será alterado: "; cin.ignore(); getline(cin, nome_dcliente); transf(nome_dcliente);
-            ind = escolha(amigo,nome_dcliente);
+            ind = escolha(amigo,nome_dcliente); cin.ignore();
             if(ind == -1){
                 cout << "Cliente não encontrado. Por favor, verifique se o nome está cadastrado ou se foi digitado corretamente.\n";
                 return;
@@ -983,6 +1015,7 @@ class Gerenciador{
                             int quanti_itens, ind_c, unid_compradas, ind_data = -1;
                             mercadoria merc_comprada;
                             tdata data_dprod;
+                            string data_t;
 
                             cout << "Quantos tipos de itens por data de validade o cliente comprou?";
                             cin >> quanti_itens; cout << endl;
@@ -1003,8 +1036,13 @@ class Gerenciador{
                                         cout << "Produto não encontrado. Por favor, tente novamente.\n";
                                     }
                                 }while(ind_c == -1);
-                                cout << "Digite quantas unidades o cliente comprou: "; cin >> unid_compradas;
-                                cout << "Digite a data de validade (d/m/a): "; cin >> data_dprod.day >> data_dprod.mon >> data_dprod.year;
+                                cout << "Digite quantas unidades o cliente comprou: "; cin >> unid_compradas; cin.ignore();
+                                do{
+                                    cout << "Digite a data de validade (d/m/a): "; getline(cin, data_t); lerData(data_t, data_dprod);
+                                    if(!dataValida(data_dprod)){
+                                        cerr << "Data inválida, tente novamente." << endl;
+                                    }
+                                }while(!dataValida(data_dprod));
                                 merc_comprada.getValid().push_back(data_dprod); 
                                 
                                 if(!(compra(merc_c, merc_v, nome_dproduto, unid_compradas, data_dprod))){
@@ -1014,7 +1052,7 @@ class Gerenciador{
                                     }
                                     break;
                                 }else{
-                                    num_prod_v += 1;
+                                    (*num_prod_v) += unid_compradas;
                                 }
 
                                 int ind_c = -1;
@@ -1197,7 +1235,7 @@ class Gerenciador{
             system("cls");
             int opcao, ind_comp = -1;
 
-            string novo_nome;
+            string novo_nome, data_t;
             int nova_quant;
             int nova_unidppacote;
             float novo_valor;
@@ -1211,7 +1249,6 @@ class Gerenciador{
                 cerr << "Produto não encontrado." << endl;
                 return;
             }
-            
             
             cout << "Mercadoria encontrada!" << endl;
             cout << "Escolha uma das opções abaixo para modificar:" << endl;
@@ -1268,9 +1305,9 @@ class Gerenciador{
                                 }
                             }
                             system("cls");
-                            cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
-                        }while(dataValida(nova_valid) == false);
-                        if(dataValida(nova_valid) == false){
+                            cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; getline(cin, data_t); lerData(data_t, nova_valid);
+                        }while(!dataValida(nova_valid));
+                        if(!dataValida(nova_valid)){
                             cout << "A data digitada é inválida." << endl;
                             cout << "Retornando ao menu de alterações...";
                             break;
@@ -1425,9 +1462,8 @@ class Gerenciador{
             }
 
             system("cls");
-            
 
-            cout << "Digite seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
+            cout << "Digite seu nome: ";cin.ignore(); getline(cin, nome_dworker); transf(nome_dworker);
             cout << "Digite a senha: "; getline(cin, senha_t);
             ind = escolha(workers, nome_dworker);
             if(ind == -1){
@@ -1490,7 +1526,7 @@ class Gerenciador{
                             resposta.clear();
                             cout << "Aqui é a área da confiabilidade." << endl;
                             cout << "Digite a nova confiabilidade do funcionário (pouco confiável/ confiável/ muito confiável): "; getline(cin, conf); transf(conf);
-                            if(conf != "pouco confiável" || conf != "confiável" || conf != "muito confiável"){
+                            if(conf != "pouco confiável" && conf != "confiável" && conf != "muito confiável"){
                                 cerr << "Ops! A confiabilidade não foi bem definida." << endl;
                                 if(resp_saida(resposta)){
                                     cout << "Retornando ao menu...\n";
@@ -1576,9 +1612,9 @@ class Gerenciador{
 
                             system("cls");
                             tdata data_t; resposta.clear();
+                            string data_str;
                             cout << "Aqui é a área para alterar a data de pagamento." << endl;
-                            cout << "Digite a nova data da pagamento do funcionário (d/m/a): ";
-                            cin >> data_t.day >> data_t.mon >> data_t.year;
+                            cout << "Digite a nova data da pagamento do funcionário (d/m/a): "; getline(cin, data_str); lerData(data_str, data_t);
                             if(dataValida(data_t)){
                                 cout << "Deseja alterar para este salário? (sim/não)"; getline(cin, resposta); transf(resposta);
                                 if(resposta != "sim"){
@@ -1645,9 +1681,9 @@ class Gerenciador{
             }
 
             system("cls");
-            cout << "Aqui é a área para alterar a senha geral." << endl;
+            cout << "Aqui é a área para alterar a senha geral." << endl; cin.ignore();
             cout << "Digite o seu nome: "; getline(cin, nome_t); transf(nome_t);
-            ind = escolha(workers, nome_t);
+            ind = escolha(workers, nome_t); cin.ignore();
             if(ind == -1){
                 cout << "O seu nome não foi encontrado." << endl;
                 return;
@@ -1660,9 +1696,10 @@ class Gerenciador{
                 resposta.clear();
                 cout << "Acesso liberado!" << endl;
                 cout << "Digite a nova senha: "; getline(cin, senha_t);
-                cout << "Deseja, realmente, alterar a senha? (sim/não)"; getline(cin, resposta); transf(resposta);
+                cout << "Deseja, realmente, alterar a senha? (sim/não)" << endl; getline(cin, resposta); transf(resposta);
                 if(resposta == "sim"){
                     chave_geral.setSenha(senha_t);
+                    cout << "Senha alterada!" << endl;
                 }else{
                     cout << "A senha não foi alterada." << endl;
                 }
@@ -1671,7 +1708,7 @@ class Gerenciador{
 
         void relatorio(int cli_cadast, int prod_cadast, int fun_cadast, int cli_ex, int prod_ex, int fun_ex, int num_prod_v, vector<mercadoria> merc_v, vector<mercadoria> merc_c){
             float soma = 0.0;
-            int num;
+            int num = 0;
             for(size_t i = 0; i<merc_v.size(); i++){
                 for(size_t j = 0; j<merc_v[i].getQuant().size(); j++){
                     soma += merc_v[i].getQuant()[j] * merc_v[i].getValor();
@@ -1701,7 +1738,7 @@ class Gerenciador{
             cout << "Salvando alterações...\n" <<endl;
             fstream arq_mercadoriaCO("Mercadorias.txt", fstream::out), arq_chaveg("Chave_g.txt", fstream::out), arq_beckup_chaveg("Chave_g_beckup", fstream::out), arq_pessoa("Pessoas.txt", fstream::out);
             fstream arq_mercadoriaVE("Mercadorias_V.txt", fstream::out);
-            if(!arq_pessoa.is_open() || !arq_mercadoriaCO.is_open() || !arq_chaveg.is_open()){
+            if(!arq_pessoa.is_open() || !arq_mercadoriaCO.is_open() || !arq_chaveg.is_open() || !arq_beckup_chaveg.is_open() || !arq_mercadoriaVE.is_open()){
                 cerr << "Ops! não foi possível abrir os arquivos!";
                 return false;
             }
@@ -1718,7 +1755,7 @@ class Gerenciador{
                 for(size_t j=0; j<merc_comprada.getQuant().size(); j++){
                     arq_mercadoriaCO << merc_comprada.getValid()[j].day << "/" << merc_comprada.getValid()[j].mon << "/" << merc_comprada.getValid()[j].year << " ";
                 }
-                arq_mercadoriaCO << endl;
+                arq_mercadoriaCO << endl << endl;
             }
 
             for(size_t i = 0; i<merc_v.size(); i++){
@@ -1733,7 +1770,7 @@ class Gerenciador{
                 for(size_t j=0; j<merc_comprada.getQuant().size(); j++){
                     arq_mercadoriaVE << merc_comprada.getValid()[j].day << "/" << merc_comprada.getValid()[j].mon << "/" << merc_comprada.getValid()[j].year << " ";
                 }
-                arq_mercadoriaVE << endl;
+                arq_mercadoriaVE << endl << endl;
             }
 
             arq_chaveg << chave_geral.getSenha() << endl;
@@ -1741,7 +1778,7 @@ class Gerenciador{
 
             for(auto& pessoa : people){
                 if(auto c = dynamic_pointer_cast<cliente>(pessoa)){
-                    arq_pessoa << c->getNome() << endl << c->getConf() << endl;
+                    arq_pessoa << c->getNome() << endl << c->getConf() << endl << c->getTipo() << endl;
                     for(size_t i = 0; i<c->getMerc().size(); i++){
                         arq_pessoa << c->getMerc()[i].getNome() << endl;
                         for(size_t j = 0; j<c->getMerc()[i].getQuant().size(); j++){
@@ -1753,13 +1790,14 @@ class Gerenciador{
                         for(size_t j = 0; j<c->getMerc()[i].getValid().size(); j++){
                             arq_pessoa << c->getMerc()[i].getValid()[j].day << "/" <<  c->getMerc()[i].getValid()[j].mon << "/" << c->getMerc()[i].getValid()[j].year << " ";
                         }
-                        arq_pessoa << endl;
+                        arq_pessoa << endl << endl;
                     }
                 }else{
                     if(auto w = dynamic_pointer_cast<proletariado>(pessoa)){
-                        arq_pessoa << w->getNome() << endl << w->getConf() << endl;
+                        arq_pessoa << w->getNome() << endl << w->getConf() << endl << w->getTipo() << endl;
                         arq_pessoa << w->getCargo() << endl << w->getSalario() << endl;
-                        arq_pessoa << w->getpay_day().day << "/" << w->getpay_day().mon << "/" << w->getpay_day().year << endl; 
+                        arq_pessoa << w->getpay_day().day << "/" << w->getpay_day().mon << "/" << w->getpay_day().year << endl;
+                        arq_pessoa << endl << endl;
                     }
                 }
             }

@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <unistd.h>
 #include <windows.h>
@@ -7,7 +8,7 @@
 
 using namespace std;
 
-void menu(Key chave_geral){
+void menu(Key& chave_geral){
     Gerenciador G;
     vector<shared_ptr<pessoa>> people;
     vector<shared_ptr<proletariado>> work;
@@ -19,24 +20,29 @@ void menu(Key chave_geral){
 
     int cli_cadast = 0, prod_cadast = 0, fun_cadast = 0;
     int cli_ex = 0, prod_ex = 0, fun_ex = 0, num_prod_v = 0;
-    string resposta, nome_dworker, senha;
-    int alternativa, ind = -1;
+    string resposta, nome_dworker, senha, data_str;
+    int alternativa = 0, ind = -1;
     
     if(((verificador_arquivo("Mercadorias.txt") == false) && (verificador_arquivo("Mercadoria_beckup.txt") == false)) && ((verificador_arquivo("Pessoas.txt") == false) && (verificador_arquivo("Pessoa_beckup.txt") == false))){
         cout << "Seja bem-vindo!" << endl;
         nome_dworker.clear();
         float v; tdata data_p;
+        
         cout << "Vejo que é a primeira vez que você abre este programa." << endl;
         cout << "Portanto, não é ingênuo pensar que você é o chefe!" << endl;
         cout << "Digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
-        cout << "Digite o seu salário (em reais):"; cin >> v;
-        cout << "Digite o dia que você recebe o seu lucro (d/m/a): "; cin >> data_p.day >> data_p.mon >> data_p.year;  
-        if(dataValida(data_p) == false){
-            cerr << "Data inválida!" << endl;
-        }
+        cout << "Digite o seu salário (em reais):"; cin >> v; cin.ignore();
+        do{
+            cout << "Digite o dia que você recebe o seu lucro (d/m/a): "; getline(cin, data_str);
+            if(!lerData(data_str, data_p) || !dataValida(data_p)){
+                cerr << "Escrita inválida!" << endl;
+                cout << "Tente novamente." << endl;
+            }
+        }while(!lerData(data_str, data_p) || !dataValida(data_p));
         funcionario.emplace_back(nome_dworker, "alta", "chefe", v, data_p);
-        cout << "Digite a nova senha do sistema: "; getline(cin, senha);
+        cout << "Digite a nova senha do sistema (sem espaços): "; getline(cin, senha);
         chave_geral.setSenha(senha);
+        cout << endl;
     }else{
         cout << "Seja bem-vindo novamente!" << endl;
         if(verificador_arquivo("Mercadorias.txt") == false){
@@ -63,7 +69,7 @@ void menu(Key chave_geral){
             people = extracao_arq_pes("Pessoas.txt");
             extracao_vector(people, work, clientes, consumidor_amigo, funcionario);
         }
-        if(verificador_arquivo("Mercadorias.txt") == false){
+        if(verificador_arquivo("Mercadorias_V.txt") == false){
             cout << "O arquivo Mercadorias_V.txt está vazio, será necessário utilizar o último beckup feito." << endl;
             if(copiararq("Mercadoria_V_beckup.txt", "Mercadorias.txt") == true){
                 extracao_arq_prod(merc_VE, "Mercadorias_V.txt");
@@ -75,13 +81,16 @@ void menu(Key chave_geral){
         }
         if(verificador_arquivo("Chave_g.txt") == false){
             cout << "O arquivo Chave_g.txt está vazio, será necessário utilizar o último beckup feito." << endl;
-            if(copiararq("Chave_g_beckup.txt", "Chave_g.txt") == true){
+            if(copiararq("Chave_g_beckup.txt", "Chave_g.txt")){
                 extracao_arq_key(chave_geral, "Chave_g.txt");
             }else{
                 do{
                     cerr << "A senha geral foi perdida! Por favor, digite o seu nome: "; getline(cin, nome_dworker); transf(nome_dworker);
                     ind = escolha(funcionario, nome_dworker);
-                    
+                    if(ind == -1){
+                        cerr << "Funcionário não encontrado!" << endl;
+                        return;
+                    }
                     if(funcionario[ind].getCargo() == "chefe"){
                         cout << "Acesso liberado!" << endl;
                         cout << "Digite a nova senha: "; getline(cin, senha);
@@ -92,11 +101,14 @@ void menu(Key chave_geral){
                     }
                 }while(ind == -1 || funcionario[ind].getCargo() != "chefe");
             }
-        }  
+        }else{
+            extracao_arq_key(chave_geral, "Chave_g.txt");
+        }
     }
     resp_saida(resposta);
 
     do{
+        system("cls");
         do{
             cout << "Selecione a sua próxima ação (escreva o número da opção):" << endl;
             cout << "1 - Registrar cliente; \n" << "2 - Registrar produto; \n" << "3 - Registrar funcionário; \n" << "4 - Excluir cliente; \n";
@@ -105,8 +117,8 @@ void menu(Key chave_geral){
             cout << "11 - Realizar beckup da nova lista de produtos; \n" << "12 - Realizar beckup da nova lista de clientes; \n" << "13 - Realizar beckup de lista de produtos vendidos; \n";
             cout << "14 - Utilizar beckup de produtos mais recente; \n" << "15 - Utilizar beckup de clientes mais recente; \n" << "16 - Utilizar beckup de produtos vendidos mais recente; \n";
             cout << "17 - Saber conta de cliente; \n" << "18 - Realizar conta; \n" << "19 - Separar produto; \n" << "20 - Agrupar unidades; \n";
-            cout << "21 - Realizar receita; \n" << "22 - Buscar por (cliente, produto, funcionário);\n " << "23 - Alterar cliente; \n" << "24 - Alterar produto; \n" << "25 - Alterar funcioário; \n";
-            cout << "26 - Alterar senha geral; \n" << "27 - Relatório; \n " << "28 - Sair. \n" << endl;
+            cout << "21 - Realizar receita; \n" << "22 - Buscar por (cliente, produto, funcionário);\n" << "23 - Alterar cliente; \n" << "24 - Alterar produto; \n" << "25 - Alterar funcioário; \n";
+            cout << "26 - Alterar senha geral; \n" << "27 - Relatório; \n" << "28 - Sair. \n" << endl;
             cout << "Digite a sua resposta: ";
             cin >> alternativa;
             cin.ignore(numeric_limits<streamsize>::max(), '\n');

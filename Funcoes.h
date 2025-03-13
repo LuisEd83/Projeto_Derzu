@@ -11,31 +11,47 @@ using namespace std;
 using namespace chrono;
 
 template <class T>
-int escolha(vector<T> Nome_vector, string Nome_p){
+int escolha(const vector<T>& Nome_vector, string Nome_p) {
     vector<int> indices;
-    int n = 0, opcao = -1;
+    int quantidade_opcoes = 0;
+    string Nome_p_lower = Nome_p; transf(Nome_p_lower);
 
-    for(size_t i = 0; i<Nome_vector.size(); i++){
-        size_t p = Nome_vector[i].getNome().find(Nome_p);
-        if(p != string::npos){
-            n++;
+    for (size_t i = 0; i < Nome_vector.size(); i++) {
+        string nome_item = Nome_vector[i].getNome();
+        transf(nome_item);
+        
+        if (nome_item.find(Nome_p_lower) != string::npos) {
+            quantidade_opcoes++;
             indices.push_back(i);
-            cout << n << " - " << Nome_vector[i].getNome() << endl;
+            cout << quantidade_opcoes << " - " << Nome_vector[i].getNome() << endl;
         }
     }
 
-    if(indices.empty()){return -1;}
+    if (indices.empty()) {
+        return -1;
+    }
 
-    n-=1;
-    do{
-        cout << "Escolha o nome desejado: "; cin >> opcao;
-        opcao -= 1;
-        if(opcao < 0 || opcao > n){
-            cout << "Opção inválida, tente novamente." << endl;
+    int opcao = -1;
+    int indice_maximo = quantidade_opcoes - 1;
+
+    do {
+        cout << "Escolha o nome desejado: ";
+        if (!(cin >> opcao)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Entrada inválida. Digite um número.\n";
+            opcao = -1;
+        } else {
+            opcao -= 1;
+            if (opcao < 0 || opcao > indice_maximo) {
+                cout << "Opção inválida. Escolha entre 1 e " << quantidade_opcoes << ".\n";
+            }
         }
-    }while(opcao < 0 || opcao > n);
+    } while (opcao < 0 || opcao > indice_maximo);
+
     return indices[opcao];
 }
+
 
 void verif_dataPG(vector<proletariado> workers){
     for(size_t i = 0; i<workers.size(); i++){
@@ -45,157 +61,164 @@ void verif_dataPG(vector<proletariado> workers){
     }
 }
 
-bool desagrupador(vector<mercadoria>& itens, size_t indice, int quant_x_separacao, tdata data_prod){
-    mercadoria nova_mercadoria;
-    int ind = -1;
-    if (indice >= itens.size()) {
-        cerr << "Índice inválido." << endl;
+bool desagrupador(vector<mercadoria>& itens, size_t indice, int quant_x_separacao, tdata data_prod) {
+    if (indice >= itens.size() || quant_x_separacao <= 0) {
+        cerr << "Índice inválido ou quantidade inválida." << endl;
         return false;
     }
-    
-    for(size_t i = 0; i<itens[indice].getValid().size(); i++){
-        if((itens[indice].getValid()[i].day - data_prod.day) + (itens[indice].getValid()[i].mon - data_prod.mon) + (itens[indice].getValid()[i].year - data_prod.year) == 0){
+
+    mercadoria& original = itens[indice];
+    int ind = -1;
+
+    for (size_t i = 0; i < original.getValid().size(); i++) {
+        const tdata& validade = original.getValid()[i];
+        if (validade.day == data_prod.day && 
+            validade.mon == data_prod.mon && 
+            validade.year == data_prod.year) {
             ind = i;
-        }
-    }
-    if(ind == -1){
-        cout << "Não foi possivel separar." << endl; return false;
-    }
-
-    if(itens[indice].getQuant()[ind] - quant_x_separacao < 0){
-        cout << "Não foi possivel separar." << endl; return false;
-    }else{
-        nova_mercadoria.setN_prod(itens[indice].getNome() + " unidade");
-        nova_mercadoria.getQuant().push_back(quant_x_separacao * itens[indice].getUnid());
-        nova_mercadoria.setValor((itens[indice].getValor() / itens[indice].getUnid()) * 1.2);
-        nova_mercadoria.setUnid(1);
-        nova_mercadoria.getValid().push_back(data_prod);
-
-        if(itens[indice].getQuant()[ind] - quant_x_separacao == 0){
-            cout << "Foi possível realizar a separação, porém, o produto " << itens[indice].getNome();
-            cout << " com a validade " << itens[indice].getValid()[ind].day << "/" << itens[indice].getValid()[ind].mon << "/" << itens[indice].getValid()[ind].year;
-            cout << " ficou com 0 unidades" << endl;
-        }else{
-            cout << "Foi possível realizar a separação, porém, o produto " << itens[indice].getNome();
-            cout << " com a validade " << itens[indice].getValid()[ind].day << "/" << itens[indice].getValid()[ind].mon << "/" << itens[indice].getValid()[ind].year;
-            cout << " ficou com " << itens[indice].getQuant()[ind] << " unidades" << endl;
+            break;
         }
     }
 
-    itens[indice].getQuant()[ind] -= quant_x_separacao;
+    if (ind == -1 || original.getQuant()[ind] < quant_x_separacao) {
+        cout << "Não foi possível separar: quantidade insuficiente ou data inválida." << endl;
+        return false;
+    }
 
-    for(size_t i = 0; i<itens.size(); i++){
-        if(itens[i].getNome() == nova_mercadoria.getNome()){
-            for(size_t j = 0; j<itens[i].getValid().size(); j++){
-                if(itens[i].getValid()[j].day + itens[i].getValid()[j].mon + itens[i].getValid()[j].year == nova_mercadoria.getValid()[0].day + nova_mercadoria.getValid()[0].mon + nova_mercadoria.getValid()[0].year){
-                    itens[i].getQuant()[j] += nova_mercadoria.getQuant()[0];
-                }else{
-                    itens[i].getQuant().push_back(nova_mercadoria.getQuant()[0]);
-                    itens[i].getValid().push_back(nova_mercadoria.getValid()[0]);
+    mercadoria nova_mercadoria;
+    nova_mercadoria.setN_prod(original.getNome() + " unidade");
+    nova_mercadoria.setUnid(1);
+    nova_mercadoria.setValor((original.getValor() / original.getUnid()) * 1.2f);
+    nova_mercadoria.getQuant().push_back(quant_x_separacao * original.getUnid());
+    nova_mercadoria.getValid().push_back(data_prod);
+
+    original.getQuant()[ind] -= quant_x_separacao;
+    
+    if (original.getQuant()[ind] == 0) {
+        original.getQuant().erase(original.getQuant().begin() + ind);
+        original.getValid().erase(original.getValid().begin() + ind);
+    }
+
+    bool encontrou = false;
+    for (auto& item : itens) {
+        if (item.getNome() == nova_mercadoria.getNome()) {
+            for (size_t j = 0; j < item.getValid().size(); j++) {
+                const tdata& val = item.getValid()[j];
+                if (val.day == data_prod.day && 
+                    val.mon == data_prod.mon && 
+                    val.year == data_prod.year) {
+                    item.getQuant()[j] += nova_mercadoria.getQuant()[0];
+                    encontrou = true;
+                    break;
                 }
             }
+            if (!encontrou) {
+                item.getQuant().push_back(nova_mercadoria.getQuant()[0]);
+                item.getValid().push_back(nova_mercadoria.getValid()[0]);
+            }
             return true;
         }
     }
-    itens.insert(itens.begin() + indice, nova_mercadoria);
+    itens.push_back(nova_mercadoria);
     return true;
-
 }//Separa o item original em unidades
 
-bool agrupador(vector<mercadoria>& itens, size_t indice){
-    string busca = " unidade";
-    size_t posicao = itens[indice].getNome().find(busca);
-    string nome_provisorio;
-    int ind = -1, num_unidades = 0, n = 0, unid_fard, soma_ditens = 0, soma = 0;
-
-    mercadoria new_mercadoria;
-
-    if (indice >= itens.size() || (posicao == string::npos)) {
-        cout << "Índice inválido ou esta mercadoria não é uma unidade." << endl;
+bool agrupador(vector<mercadoria>& itens, size_t indice) {
+    if (indice >= itens.size()) {
+        cerr << "Erro: Índice inválido.\n";
         return false;
-    }else{
-        nome_provisorio = itens[indice].getNome().erase(posicao, sizeof(busca));
-        itens[indice].getNome() += busca;
-        new_mercadoria.getNome() = nome_provisorio;
     }
 
-    for(size_t i = 0; i < itens.size(); i++){
-        string busca = nome_provisorio;
-        size_t posicao = itens[i].getNome().find(busca);
-        if(!(posicao == string::npos)){
-            ind = i;
-        }
+    mercadoria& produto = itens[indice];
+    if (!produto.ehUnidade()) {
+        cerr << "Erro: O produto não é uma unidade.\n";
+        return false;
     }
 
-     if(ind == -1){
-        cout << "Não foi possível encontrar o item original (o fardo). \n";
-        cout << "Portanto, digite quantas unidades possui no agrupamento desta unidade: ";
-        cin >> unid_fard;
-     }else{
-        new_mercadoria.setValor(itens[ind].getValor());
-     }
+    // Extrai o nome base (ex: "Arroz unidade" → "Arroz")
+    size_t pos = produto.getNome().find(" unidade");
+    if (pos == string::npos) {
+        cerr << "Erro: Formato do nome inválido.\n";
+        return false;
+    }
+    string nome_base = produto.getNome().substr(0, pos);
 
-    do{
-        itens[indice].getQuant()[0 + n]--;
-        num_unidades++;
-        soma++;
-
-        if((soma == unid_fard) || (soma == itens[ind].getUnid())){
-            new_mercadoria.getQuant().push_back(num_unidades);
-            new_mercadoria.getValid().push_back(itens[indice].getValid()[0+n]);
+    // Procura pelo fardo correspondente
+    int indice_fardo = -1;
+    for (size_t i = 0; i < itens.size(); i++) {
+        if (itens[i].getNome() == nome_base) {
+            indice_fardo = i;
             break;
-        }else{
-            if(itens[indice].getQuant()[0 + n] == 0){
-                new_mercadoria.getQuant().push_back(num_unidades);
-                new_mercadoria.getQuant().push_back(itens[indice].getQuant()[0 + n]);
-                n++;
-                num_unidades=0;
-            }
-            for(size_t i = 0; i<itens[indice].getQuant().size(); i++){
-                soma_ditens += itens[indice].getQuant()[i];
-            }
-            if(soma == 0){
-                cout << "Não é possível realizar o agrupamento destas unidades.";
-                return false;
-            }
-        }    
-    }while((soma != unid_fard )|| (soma != itens[ind].getUnid())); //retira as unidades
-    for(size_t i = 0; i < itens[indice].getQuant().size(); i++){
-        if(itens[indice].getQuant()[i] == 0){
-            itens[indice].getQuant().erase(itens[indice].getQuant().begin()+i);
-            itens[indice].getValid().erase(itens[indice].getValid().begin()+i);
         }
     }
-    new_mercadoria.getQuant().push_back(1);
-    new_mercadoria.setValor(num_unidades * itens[indice].getValor()); // Nova mercadoria construída.
 
-    for(size_t i = 0; i<itens.size(); i++){
-        string busca = new_mercadoria.getNome();
-        size_t posicao = itens[i].getNome().find(busca);
-        if(!(posicao == string::npos)){
-            for(size_t j = 0; j<new_mercadoria.getQuant().size(); j++){
-                itens[i].getQuant().push_back(new_mercadoria.getQuant()[j]);
-                itens[i].getValid().push_back(new_mercadoria.getValid()[j]);
-            }
-            return true;
+    // Define unidades por fardo
+    int unidades_por_fardo;
+    if (indice_fardo == -1) {
+        cout << "Digite o número de unidades por fardo: ";
+        while (!(cin >> unidades_por_fardo) || unidades_por_fardo <= 0) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cerr << "Valor inválido! Digite um número maior que 0: ";
         }
+    } else {
+        unidades_por_fardo = itens[indice_fardo].getUnid();
     }
-    itens.insert(itens.begin() + indice, new_mercadoria);
+
+    // Calcula o total de unidades disponíveis
+    int total_unidades = 0;
+    for (int q : produto.getQuant()) total_unidades += q;
+
+    if (total_unidades < unidades_por_fardo) {
+        cerr << "Erro: Unidades insuficientes (" << total_unidades << ") para formar 1 fardo.\n";
+        return false;
+    }
+
+    // Calcula fardos e unidades restantes
+    int num_fardos = total_unidades / unidades_por_fardo;
+    int unidades_restantes = total_unidades % unidades_por_fardo;
+
+    // Atualiza ou cria o fardo
+    if (indice_fardo == -1) {
+        mercadoria fardo;
+        fardo.setN_prod(nome_base);
+        fardo.setUnid(unidades_por_fardo);
+        fardo.setValor(produto.getValor() * unidades_por_fardo); 
+        fardo.getQuant().push_back(num_fardos);
+        fardo.getValid().push_back(produto.getValid()[0]);
+        itens.push_back(fardo); // Adiciona ao final do vetor
+    } else {
+        // Adiciona aos fardos existentes (mesma validade)
+        itens[indice_fardo].getQuant()[0] += num_fardos;
+    }
+
+    // Atualiza a unidade original
+    if (unidades_restantes > 0) {
+        produto.getQuant().clear();
+        produto.getQuant().push_back(unidades_restantes);
+        produto.getValid().resize(1); // Mantém apenas a primeira validade
+    } else {
+        // Remove o item original do vetor
+        itens.erase(itens.begin() + indice);
+    }
+
+    cout << "Agrupamento concluído. Vetor modificado com sucesso!\n";
     return true;
-    
-}//Agrupa unidades em um unico item.
+}
+
+//Agrupa unidades em um unico item.
 
 float conta_cliente (vector<cliente> comprador, string nome_search){
     float valor_conta = 0.0;
-    float ind = -1.0;
+    float ind = -1;
 
     ind = escolha(comprador, nome_search);
-    if(ind == -1.0){
+    if(ind == -1){
         cout << "Nome não encontrado.\n" << "Verifique se o nome foi digitado incorretamente.";
         return -1.0;
     }else{
         for(size_t i = 0; i<comprador[ind].getMerc().size(); i++){
-            for(size_t j = 0; j<comprador[ind].getMerc()[i].getQuant().size(); i++){
+            for(size_t j = 0; j<comprador[ind].getMerc()[i].getQuant().size(); j++){
                 valor_conta += comprador[ind].getMerc()[i].getQuant()[j] * comprador[ind].getMerc()[i].getValor();
             }
         }
@@ -204,27 +227,25 @@ float conta_cliente (vector<cliente> comprador, string nome_search){
     return valor_conta;
 }//Retorna o que o cliente deve.
 
-float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve, vector<cliente> compradores){
-    float venda = 0.0, compra = 0.0, venda_cli_arm = 0.0;
+float receita(vector<mercadoria> itens_Co, vector<mercadoria> itens_Ve, vector<cliente> compradores) {
+    float compra = 0.0, venda = 0.0, venda_cli_arm = 0.0;
 
-    for(size_t i = 0; i<itens_Co.size(); i++){
-        for(size_t j = 0; j < itens_Co[i].getQuant().size(); j++){
-            compra += itens_Co[i].getQuant()[j] * itens_Co[i].getValor();
+    for ( auto& merc : itens_Co) {
+        for (int quant : merc.getQuant()) {
+        compra += merc.getValor() * quant;
         }
     }
-    for(size_t i = 0; i<itens_Ve.size(); i++){
-        for(size_t j = 0; j < itens_Ve[i].getQuant().size(); j++){
-            venda += itens_Ve[i].getQuant()[j] * itens_Ve[i].getValor();
+
+    for ( auto& merc : itens_Ve) {
+        for (int quant : merc.getQuant()) {
+        venda += merc.getValor() * quant;
         }
     }
-    for(size_t i = 0; i<compradores.size(); i++){
-        for(size_t j = 0; j<compradores[i].getMerc().size(); j++){
-            for(size_t k = 0; k<compradores[i].getMerc()[j].getQuant().size(); k++){
-                venda_cli_arm += compradores[i].getMerc()[j].getQuant()[k] * compradores[i].getMerc()[j].getValor();
-            }
-        }
+
+    for ( auto& cliente : compradores) {
+        venda_cli_arm += cliente.divida(cliente.getMerc()); 
     }
-    
+
     return venda - compra - venda_cli_arm;
 }//Retorna o lucro (positivo ou não).
 
@@ -303,6 +324,52 @@ void verfic_venc(vector<mercadoria>& itens_p_verific){
                 cout << "possui " <<  itens_p_verific[i].getQuant()[j] << "unidades vencidas";
             }
         }
+    }
+}
+
+bool lerData(string data_str, tdata& data) {
+    std::stringstream ss(data_str);
+    char slash;
+
+    if (ss >> data.day >> slash >> data.mon >> slash >> data.year) {
+        if (slash == '/') {
+            return true;
+        }
+    }
+    std::cerr << "Formato de data inválido! Use o formato dia/mes/ano.\n";
+    return false;
+}
+
+bool dataValida(tdata data){
+    int diaspmes[]={0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    auto now = system_clock::now();
+    time_t time_now = system_clock::to_time_t(now);
+    tm* local_time = localtime(&time_now);
+    int ano = local_time->tm_year + 1900;
+    int mes = local_time->tm_mon + 1;
+    int dia = local_time->tm_mday;
+
+    if((data.year < ano)||(data.year == ano && (data.mon < mes || (data.mon == mes && data.day < dia)))){return false;}
+
+    if(data.mon < 1 || data.mon > 12){return false;}
+    if(data.mon == 2 && data.year%4==0){diaspmes[2] = 29;}
+
+    return (data.day >= 1 && data.day<=diaspmes[data.mon]);
+}
+bool next_d(tdata& data, int x){
+    int diaspmes[]={0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if(data.mon == 2 && data.year%4==0){diaspmes[2] = 29;}
+
+    if(dataValida(data)){
+        for(int i = 0; i<x; i++){    
+            data.day++;
+            if(data.day > diaspmes[data.mon]){data.day = 1; data.mon++;}
+            if(data.mon > 12){data.mon = 1; data.year++;}
+        }
+        return true;
+    }else{
+        return false;
     }
 }
 
@@ -388,10 +455,10 @@ vector<shared_ptr<pessoa>> extracao_arq_pes(const string nome_arq){
 
     while(arq_pes >> name >> conf >> tipo){
         if(tipo == 1){
-            string cargo;
+            string cargo, data_str;
             float v;
             tdata data_pg;
-            arq_pes >> cargo >> v >> data_pg.day >> data_pg.mon >> data_pg.year;
+            arq_pes >> cargo >> v >> data_str; lerData(data_str, data_pg);
             people.emplace_back(make_shared<proletariado>(name, conf, cargo, v, data_pg));
 
         }else{
@@ -527,52 +594,6 @@ bool proc_carg(vector<proletariado> workers, string carg){
         }
     }
     return false;
-}
-
-bool lerData(string data_str, tdata& data) {
-    std::stringstream ss(data_str);
-    char slash;
-
-    if (ss >> data.day >> slash >> data.mon >> slash >> data.year) {
-        if (slash == '/') {
-            return true;
-        }
-    }
-    std::cerr << "Formato de data inválido! Use o formato dia/mes/ano.\n";
-    return false;
-}
-
-bool dataValida(tdata data){
-    int diaspmes[]={0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    auto now = system_clock::now();
-    time_t time_now = system_clock::to_time_t(now);
-    tm* local_time = localtime(&time_now);
-    int ano = local_time->tm_year + 1900;
-    int mes = local_time->tm_mon + 1;
-    int dia = local_time->tm_mday;
-
-    if((data.year < ano)||(data.year == ano && (data.mon < mes || (data.mon == mes && data.day < dia)))){return false;}
-
-    if(data.mon < 1 || data.mon > 12){return false;}
-    if(data.mon == 2 && data.year%4==0){diaspmes[2] = 29;}
-
-    return (data.day >= 1 && data.day<=diaspmes[data.mon]);
-}
-bool next_d(tdata data, int x){
-    int diaspmes[]={0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    if(data.mon == 2 && data.year%4==0){diaspmes[2] = 29;}
-
-    if(dataValida(data)){
-        for(int i = 0; i<x; i++){    
-            data.day++;
-            if(data.day > diaspmes[data.mon]){data.day = 1; data.mon++;}
-            if(data.mon > 12){data.mon = 1; data.year++;}
-        }
-        return true;
-    }else{
-        return false;
-    }
 }
 
 bool compra(vector<mercadoria>& mercadoria_CO, vector<mercadoria>& mercadoria_VE, string& nome_dproduto, int unidades_compradas, tdata data_dprod){

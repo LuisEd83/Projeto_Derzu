@@ -37,8 +37,9 @@ class mercadoria{
         }
         void setUnid(int uni){unidade_pacote = uni;}
         void setValor(float v){valor = v;}
-        void setValid(vector<tdata> datas){
-            for(size_t i = 0; i<datas.size(); i++){
+        void setValid(vector<tdata> datas) {
+            validade.resize(datas.size());
+            for(size_t i = 0; i < datas.size(); i++) {
                 validade[i] = datas[i];
             }
         }
@@ -90,6 +91,10 @@ class mercadoria{
 
                 return ind_prod[opcao];
             }
+
+            bool ehUnidade() const {
+                return nome_produto.find(" unidade") != string::npos;
+            }
 };
 
 class pessoa{
@@ -104,7 +109,7 @@ class pessoa{
 
         string getNome() const{return nome;}
         string getConf() const{return confianca;}
-        int getTipo(){return 0;}
+        virtual int getTipo(){return 0;}
 
         void setNome(string nome){this -> nome = nome;}
         void setConf(string conf){confianca = conf;}
@@ -120,7 +125,7 @@ class pessoa{
             return false;
         }
 
-        virtual vector<string> dadosPtabela(){
+        virtual vector<string> dadosPtabela() const {
             return {
                 getNome(),
                 getConf(),

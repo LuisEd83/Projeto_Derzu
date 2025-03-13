@@ -113,12 +113,12 @@ void menu(Key& chave_geral){
             cout << "Selecione a sua próxima ação (escreva o número da opção):" << endl;
             cout << "1 - Registrar cliente; \n" << "2 - Registrar produto; \n" << "3 - Registrar funcionário; \n" << "4 - Excluir cliente; \n";
             cout << "5 - Excluir produto; \n"  << "6 - Demitir funcionário; \n" << "7 - Abrir lista de produto; \n" << "8 - Abrir lista de pessoas; \n";
-            cout << "9 - Verificar validade dos produtos; \n" << "10 - Verificar dia de pagamento de funcionários; \n";
-            cout << "11 - Realizar beckup da nova lista de produtos; \n" << "12 - Realizar beckup da nova lista de clientes; \n" << "13 - Realizar beckup de lista de produtos vendidos; \n";
-            cout << "14 - Utilizar beckup de produtos mais recente; \n" << "15 - Utilizar beckup de clientes mais recente; \n" << "16 - Utilizar beckup de produtos vendidos mais recente; \n";
-            cout << "17 - Saber conta de cliente; \n" << "18 - Realizar conta; \n" << "19 - Separar produto; \n" << "20 - Agrupar unidades; \n";
-            cout << "21 - Realizar receita; \n" << "22 - Buscar por (cliente, produto, funcionário);\n" << "23 - Alterar cliente; \n" << "24 - Alterar produto; \n" << "25 - Alterar funcioário; \n";
-            cout << "26 - Alterar senha geral; \n" << "27 - Relatório; \n" << "28 - Sair. \n" << endl;
+            cout << "9 - Verificar dia de pagamento de funcionários; \n";
+            cout << "10 - Realizar beckup da nova lista de produtos; \n" << "11 - Realizar beckup da nova lista de clientes; \n" << "12 - Realizar beckup de lista de produtos vendidos; \n";
+            cout << "13 - Utilizar beckup de produtos mais recente; \n" << "14 - Utilizar beckup de clientes mais recente; \n" << "15 - Utilizar beckup de produtos vendidos mais recente; \n";
+            cout << "16 - Saber conta de cliente; \n" << "17 - Realizar conta; \n" << "18 - Separar produto; \n" << "19 - Agrupar unidades; \n";
+            cout << "20 - Realizar receita; \n" << "21 - Buscar por (cliente, produto, funcionário);\n" << "22 - Alterar cliente; \n" << "23 - Alterar produto; \n" << "24 - Alterar funcioário; \n";
+            cout << "25 - Alterar senha geral; \n" << "26 - Relatório; \n" << "27 - Sair. \n" << endl;
             cout << "Digite a sua resposta: ";
             cin >> alternativa;
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -206,41 +206,34 @@ void menu(Key& chave_geral){
             break;
             }
             case 9:{
-                G.lista_venc(merc_CO);
+                G.temp_pg_fun(funcionario);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
             case 10:{
-                G.temp_pg_fun(funcionario);
-                if(resp_saida(resposta)){
-                    cout << "Retornando ao menu...";
-                }
-            break;
-            }//data de pagamento do funcionário
-            case 11:{
                 G.realiza_beckup_prod();
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
-            case 12:{
+            case 11:{
                 G.realiza_beckup_pessoas(chave_geral, funcionario);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
-            case 13:{
+            case 12:{
                 G.realiza_beckup_prod_ve();
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
-            case 14:{
+            case 13:{
                 G.utiliza_beckup_prod();
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
@@ -248,14 +241,14 @@ void menu(Key& chave_geral){
 
             break;
             }
-            case 15:{
+            case 14:{
                 G.utiliza_beckup_pessoas(funcionario, chave_geral);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
-            case 16:{
+            case 15:{
                 G.utiliza_beckup_prod_V();
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
@@ -263,21 +256,21 @@ void menu(Key& chave_geral){
                 }
             break;
             }
-            case 17:{
+            case 16:{
                 G.conta_cli(consumidor_amigo);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
-            case 18:{
+            case 17:{
                 G.realiza_compra(merc_CO, merc_VE, &num_prod_v);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...";
                 }
             break;
             }
-            case 19:{
+            case 18:{
                 G.separador_prod(merc_CO);
                 
                 if(resp_saida(resposta)){
@@ -285,14 +278,14 @@ void menu(Key& chave_geral){
                 }  
             break;
             }
-            case 20:{
+            case 19:{
                 G.agrupador_prod(merc_CO);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 21:{
+            case 20:{
                 G.receita_total(merc_CO, merc_VE, consumidor_amigo);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
@@ -300,49 +293,49 @@ void menu(Key& chave_geral){
             break;
             }
 
-            case 22:{
+            case 21:{
                 G.busca(merc_CO, funcionario, consumidor_amigo);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 23:{
+            case 22:{
                 G.alterar_cli(consumidor_amigo, merc_CO, merc_VE, &num_prod_v);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 24:{
+            case 23:{
                 G.alterar_prod(merc_CO);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 25:{
+            case 24:{
                 G.alterar_fun(funcionario, chave_geral);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 26:{
+            case 25:{
                 G.alterar_chave(chave_geral, funcionario);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 27:{
+            case 26:{
                 G.relatorio(cli_cadast, prod_cadast, fun_cadast, cli_ex, prod_ex, fun_ex, num_prod_v, merc_VE, merc_CO);
                 if(resp_saida(resposta)){
                     cout << "Retornando ao menu...\n";
                 }
             break;
             }
-            case 28:{
+            case 27:{
                 inversa_extracao_vector(people, consumidor_amigo, funcionario);
                 if(G.salvacao_dados(chave_geral, merc_CO, merc_VE, people) == false){
                     cerr << "Houve um problema durante as salvações dos arquivos." << endl;
@@ -359,5 +352,5 @@ void menu(Key& chave_geral){
                 break;
             }
         }
-    }while((alternativa != 28));
+    }while((alternativa != 27));
 }

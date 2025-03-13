@@ -1043,7 +1043,7 @@ class Gerenciador{
 
                             nome_dcliente.clear();
                             cliente client_t;
-                            resposta.clear(); cin.ignore();
+                            resposta.clear();
 
                             cout << "Digite o novo nome do cliente: "; getline(cin, nome_dcliente); transf(nome_dcliente);
                             bool nomeExiste = false;
@@ -1158,7 +1158,7 @@ class Gerenciador{
                             system("cls");
                             string conf = "void";
                             
-                            cout << "Aqui é a área de confiabilidade.\n"; cin.ignore();
+                            cout << "Aqui é a área de confiabilidade.\n";
                             cout << "Digite a confiabilidade do cliente: "; cin.ignore(); getline(cin, conf); transf(conf);
                             amigo[ind].setConf(conf);
                             cout << "Alteração concluída!" << endl;
@@ -1310,7 +1310,7 @@ class Gerenciador{
                             break;
                         }
 
-                        system("cls"); novo_nome.clear(); ind_comp = -1; cin.ignore();
+                        system("cls"); novo_nome.clear(); ind_comp = -1;
                         cout << "Digite o novo nome do produto: "; getline(cin, novo_nome); transf(novo_nome);
                         ind_comp = escolha(merc_c, novo_nome);
                         if(ind_comp == -1){
@@ -1343,7 +1343,7 @@ class Gerenciador{
                                     break;
                                 }
                             }
-                            system("cls"); cin.ignore();
+                            system("cls");
                             cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; getline(cin, data_t); lerData(data_t, nova_valid);
                         }while(!dataValida(nova_valid));
                         if(!dataValida(nova_valid)){
@@ -1371,7 +1371,7 @@ class Gerenciador{
                             break;
                         }
 
-                        system("cls"); cin.ignore();
+                        system("cls");
                         cout << "Digite a nova unidade por pacote: "; cin >> nova_unidppacote;
                         merc_c[ind].setUnid(nova_unidppacote);
 
@@ -1385,7 +1385,7 @@ class Gerenciador{
                             system("cls");
                             break;
                         }
-                        system("cls"); cin.ignore();
+                        system("cls");
                         cout << "Digite o novo valor da mercadoria: "; cin >> novo_valor; merc_c[ind].setValor(novo_valor);
 
                         cout << "Alteração realizada com sucesso!" << endl;
@@ -1406,7 +1406,7 @@ class Gerenciador{
                                     break;
                                 }
                             }
-                            system("cls"); ind_comp = -1; cin.ignore();
+                            system("cls"); ind_comp = -1;
                             cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
                             for(size_t j = 0; j<merc_c[ind].getValid().size(); j++){
                                 if(merc_c[ind].getValid()[j].day == nova_valid.day &&
@@ -1451,7 +1451,7 @@ class Gerenciador{
                                     break;
                                 }
                             }
-                            system("cls"); ind_comp = -1; cin.ignore();
+                            system("cls"); ind_comp = -1;  cin.ignore();
                             cout << "Digite a data de validade do produto que você deseja realizar a promoção (d/m/a): "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
                             for(size_t j = 0; j<merc_c[ind].getValid().size(); j++){
                                 if(merc_c[ind].getValid()[j].day == nova_valid.day &&
@@ -1837,7 +1837,7 @@ class Gerenciador{
                         for(size_t j = 0; j<c->getMerc()[i].getValid().size(); j++){
                             arq_pessoa << c->getMerc()[i].getValid()[j].day << "/" <<  c->getMerc()[i].getValid()[j].mon << "/" << c->getMerc()[i].getValid()[j].year << " ";
                         }
-                        arq_pessoa << endl << endl;;
+                        arq_pessoa << endl;
                     }
                 }else{
                     if(auto w = dynamic_pointer_cast<proletariado>(pessoa)){

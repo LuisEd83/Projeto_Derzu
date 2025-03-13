@@ -665,7 +665,7 @@ class Gerenciador{
                 cout << "Aguarde um momento...\n";
                 if(copiararq("Mercadoria_beckup.txt","Mercadorias.txt")){
                     cout << "Beckup feito com sucesso!\n";
-                    sleep(2); system("cls");
+                     system("cls");
                     return;
                 }
             }
@@ -726,7 +726,7 @@ class Gerenciador{
                 cout << "Aguarde um momento...\n";
                 if(copiararq("Mercadoria_V_beckup.txt","Mercadorias_V.txt")){
                     cout << "Beckup feito com sucesso!\n";
-                    sleep(2); system("cls");
+                     system("cls");
                     return;
                 }
             }
@@ -753,7 +753,7 @@ class Gerenciador{
             }
         }
 
-        void realiza_compra(vector<mercadoria> merc_c, vector<mercadoria> merc_v, int* num_prod_v){
+        void realiza_compra(vector<mercadoria>& merc_c, vector<mercadoria>& merc_v, int* num_prod_v){
             string resposta, nome_dproduto, data_t;
             int quant_itens, unid_comp, ind = -1; nome_dproduto.clear();
             float valor_conta = 0.0, pagamento_cl, troco;
@@ -781,7 +781,7 @@ class Gerenciador{
                     if(ind < 0){
                         cout << "Produto não encontrado!" << endl;
                         cout << "Tente novamente.";
-                        sleep(2); system("cls");
+                        system("cls");
                     }
                 }while(ind < 0);
                 
@@ -1043,7 +1043,7 @@ class Gerenciador{
 
                             nome_dcliente.clear();
                             cliente client_t;
-                            resposta.clear();
+                            resposta.clear(); cin.ignore();
 
                             cout << "Digite o novo nome do cliente: "; getline(cin, nome_dcliente); transf(nome_dcliente);
                             bool nomeExiste = false;
@@ -1311,7 +1311,7 @@ class Gerenciador{
                         }
 
                         system("cls"); novo_nome.clear(); ind_comp = -1;
-                        cout << "Digite o novo nome do produto: "; getline(cin, novo_nome); transf(novo_nome);
+                        cout << "Digite o novo nome do produto: "; cin.ignore(); getline(cin, novo_nome); transf(novo_nome);
                         ind_comp = escolha(merc_c, novo_nome);
                         if(ind_comp == -1){
                             merc_c[ind].setN_prod(novo_nome);
@@ -1332,18 +1332,18 @@ class Gerenciador{
                         }
                     break;
                     case 2:
-                        if(verific(resposta)){
-                            system("cls");
-                            break;
-                        }
                         do{
+                            if (verific(resposta)){
+                                system("cls");
+                                break;
+                            }
                             if(ind_comp == -1){
                                 if(verific(resposta)){
                                     system("cls");
                                     break;
                                 }
                             }
-                            system("cls");
+                            system("cls");cin.ignore();
                             cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; getline(cin, data_t); lerData(data_t, nova_valid);
                         }while(!dataValida(nova_valid));
                         if(!dataValida(nova_valid)){
@@ -1407,13 +1407,15 @@ class Gerenciador{
                                 }
                             }
                             system("cls"); ind_comp = -1;
-                            cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
+                            string data_str;
+                            cout << "Digite a data de validade do produto que você deseja alterar (d/m/a): "; cin.ignore();getline(cin, data_str); lerData(data_str, nova_valid);
                             for(size_t j = 0; j<merc_c[ind].getValid().size(); j++){
                                 if(merc_c[ind].getValid()[j].day == nova_valid.day &&
                                 merc_c[ind].getValid()[j].mon == nova_valid.mon &&
                                 merc_c[ind].getValid()[j].year == nova_valid.year){
                                     ind_comp = j;
-                                    cout << "Digite a nova validade: "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
+                                    data_str.clear();
+                                    cout << "Digite a nova validade: "; cin.ignore(); getline(cin, data_str); lerData(data_str, nova_valid);
                                     if(dataValida(nova_valid)){
                                         merc_c[ind].getValid()[j] = nova_valid;
                                         merc_c[ind].getValid().erase(merc_c[ind].getValid().begin() + j + 1);
@@ -1451,8 +1453,13 @@ class Gerenciador{
                                     break;
                                 }
                             }
-                            system("cls"); ind_comp = -1;  cin.ignore();
-                            cout << "Digite a data de validade do produto que você deseja realizar a promoção (d/m/a): "; cin >> nova_valid.day >> nova_valid.mon >> nova_valid.year;
+                            system("cls"); ind_comp = -1;
+                            string data_str;
+                                    cout << "Digite a data de validade do produto que você deseja realizar a promoção (d/m/a): ";
+                            cin.ignore();
+                            getline(cin, data_str);
+                            lerData(data_str, nova_valid);
+
                             for(size_t j = 0; j<merc_c[ind].getValid().size(); j++){
                                 if(merc_c[ind].getValid()[j].day == nova_valid.day &&
                                 merc_c[ind].getValid()[j].mon == nova_valid.mon &&
